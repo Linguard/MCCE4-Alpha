@@ -12,21 +12,21 @@ This tutorial walks you through calculating and analyzing __electrostatic intera
 You’ll find step-by-step practical examples designed to help new users quickly run simulations and understand key features of MCCE4.
 
 __🛠️ Install Now:__ [Installation](https://gunnerlab.github.io/mcce4_tutorial/docs/installation/) 
-__TL;DR (Installation):__
-1. Clone this repo:
-```
-  git clone https://github.com/GunnerLab/MCCE4-Alpha.git; cd MCCE4-Alpha
-```
+#### TL;DR (Installation):
+  1. Clone this repo:
+  ```
+   git clone https://github.com/GunnerLab/MCCE4-Alpha.git; cd MCCE4-Alpha
+  ```
   
-2. Run:
-```
-  sh ./MCCE_bin/check_environment.sh
-```
+  2. Run:
+  ```
+   sh ./MCCE_bin/check_environment.sh
+  ```
 
-3. If no "TODOs" to do, then run:
-```
-  sh ./MCCE_bin/quick_install.sh
-``` 
+  3. If no "TODOs" to do, then run:
+  ```
+   sh ./MCCE_bin/quick_install.sh
+  ``` 
 
 __🚀 Run Your First Job:__ [Quick Start](https://gunnerlab.github.io/mcce4_tutorial/docs/guide/quick_start/)  
 
