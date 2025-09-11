@@ -1,4 +1,5 @@
 #!/bin/sh
+
 echo "MCCE4 \"Quick Install\" Script"
 echo ""
 
@@ -97,15 +98,14 @@ echo ""
 echo "Please refer to the Installation guide to obtain compiled versions for your system."
 echo ""
 echo "Conda environment creation..."
-if ! command -v conda >/dev/null 2>&1;
-then
+if command -v conda >/dev/null 2>&1;
+    DO_CONDA=1
+else
     DO_CONDA=0
     echo "'conda' could not be found. Please run this script:"
     echo " sh ./MCCE_bin/check_environment.sh"
     echo ""
     echo "Skipping conda env creation."
-else
-    DO_CONDA=1
 fi
 
 if [ "$DO_CONDA" -eq 1 ];
