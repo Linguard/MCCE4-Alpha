@@ -30,10 +30,11 @@ def rcsb_download(pdb_fname: str) -> requests.Response:
     return requests.get(url_rscb, allow_redirects=True)
 
 
-def rcsb_download_header(pdb_fname: str) -> requests.Response:
-    url_rscb = "https://files.rcsb.org/header/" + pdb_fname
-    return requests.get(url_rscb, allow_redirects=True,
-                        headers = {"accept-encoding": "identity"})
+# def rcsb_download_header0(pdb_fname: str) -> requests.Response:
+#     """OBSOLETE: the entire file will be downloaded."""
+#     url_rscb = "https://files.rcsb.org/header/" + pdb_fname
+#     return requests.get(url_rscb, allow_redirects=False,
+#                         headers = {"accept-encoding": "identity"})
 
 
 def get_rcsb_pdb(pdbid: str,
@@ -71,11 +72,6 @@ def get_rcsb_pdb(pdbid: str,
         return Path(pdb).resolve()
 
     biopdb = pdbid + f".pdb{bioassembly_id}"
-    pdbhdr = Path(pdb).with_suffix(".hdr")
-    # The bioassembly and header pdb are downloaded because the bioassembly file
-    # will not have the complete orginal header, which mcce4.pdbio.py parses for info
-    # about sequence, compounds, etc.
-
     # list of bool to identify which pdb was saved:
     which_ba = [False, False]  # 0:  bio assembly, 1: pdb standard
 
@@ -102,33 +98,7 @@ def get_rcsb_pdb(pdbid: str,
             logger.error("Could neither download the bio assembly or standard pdb file.")
             return None, "Error: Could neither download the bio assembly or pdb file."
     else:
-        # get the original header to use for the bioassembly file
-        r2 = rcsb_download_header(pdb)
-        if r2.status_code < 400:
-            with open(pdbhdr, "w") as fo:
-                fo.write(r2.text)
-        else:
-            logger.warning(f"Could not download the full pdb file header: bioassembly with partial header used: {r2.reason}")
-            # use bioassembly as pdb file:
-            shutil.move(biopdb, pdb)
-            return Path(pdb).resolve()
-
-        # check if header has a MODEL line
-        hdr_has_model_line = False
-        with open(pdbhdr) as hdr:
-            hdr_has_model_line = hdr.readlines()[-1][:5] == "MODEL"
-
-        # append assembly lines to the header file:
-        if hdr_has_model_line:
-            cmd = "egrep '^ATOM|^HETATM|^ENDMDL|^END' " + biopdb + " >> " + str(pdbhdr)
-        else:
-            cmd = "egrep '^MODEL|^ATOM|^HETATM|^ENDMDL|^END' " + biopdb + " >> " + str(pdbhdr)
-        o = subprocess_run(cmd, capture_output = True, check = True)
-        if isinstance(o, subprocess.CalledProcessError):
-            logger.warning(f"Failed adding full header for {pdb}: bioassembly with partial header used.")
-            shutil.move(biopdb, pdb)
-        else:
-            shutil.move(pdbhdr, pdb)
+        shutil.copy(biopdb, pdb)
 
         if not keep_bioassembly:
             Path(biopdb).unlink()
