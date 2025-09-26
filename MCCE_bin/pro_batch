@@ -4,7 +4,18 @@ import os
 from pathlib import fnmatch, Path
 import shutil
 import sys
-from typing import Union
+from typing import List, Union
+
+
+CLONE = Path(__file__).parent.parent
+
+if CLONE.name != "MCCE4-Alpha":
+    from mcce4.mcce_benchmark import BenchResources, datasets_dict
+    inputpath_help = f"Path to a directory containing PDB files, or name of a pkdb dataset, one of: {list(datasets_dict.keys())}."
+else:
+    datasets_dict = None
+    #print("Note: Benchmark datasets are not available in MCCE4-Alpha.")
+    inputpath_help = "Path to a directory containing PDB files."
 
 
 # uses grafitti font from https://patorjk.com/software/taag/#p=display&f=Graffiti&t=Bench%20Batch%20v.1
@@ -17,8 +28,6 @@ __________                __         .__         __________         __         .
                                    \/        \/          \/      \/          \/     \/        \/         \/
 """
 
-
-CLONE = Path(__file__).parent.parent
 BOOK = "book.txt"
 CUSTOM_PRM = "run.prm.custom"
 SUBMIT_SCRIPT = "submit_mcce4.sh"
@@ -85,7 +94,7 @@ def process_protein_file(protein_path: str, script_path: str, use_scheduler: boo
     """
     protein_path = Path(protein_path)
     protein_name = protein_path.stem
-    protein_dir = Path(protein_name)
+    protein_dir = Path(protein_name.upper())
     protein_dir.mkdir(exist_ok=True)
 
     # Copy the protein file into its directory
@@ -138,15 +147,27 @@ def update_book_with_new_proteins(user_files: list):
     if missing:
         with open(BOOK, "a") as f:
             for protein in sorted(missing):
-                f.write(protein + '\n')
+                f.write(protein.upper() + '\n')
     return
 
 
-def get_user_files(input_path: str) -> list:
+def get_user_files(input_path: str) -> List[Path]:
     """Return the list of user pdb files excluding mcce outputs.
     """
-    return [fp for fp in Path(input_path).glob("*.pdb")
-            if not fnmatch.fnmatch(fp.name, "step[0123]_out.pdb")]
+    input_path = Path(input_path)
+    if datasets_dict is None:  # case CLONE is MCCE4-Alpha
+        return [fp for fp in input_path.glob("*.pdb")
+                if not (fnmatch.fnmatch(fp.name, "step[0123]_out.pdb")
+                   or fp.name == "prot.pdb")
+                ]
+    
+    if input_path.name == "runs" and input_path.parent.name in datasets_dict:
+        return [fp for fp in input_path.glob("*/*.pdb")]
+    
+    return [fp for fp in input_path.glob("*.pdb")
+            if not (fnmatch.fnmatch(fp.name, "step[0123]_out.pdb")
+               or fp.name == "prot.pdb")
+            ]
 
 
 def process_user_proteins(user_files: list,
@@ -173,6 +194,33 @@ def process_user_proteins(user_files: list,
     return
 
 
+def get_dataset_path(input_path: str) -> str:
+    if datasets_dict is None:
+        input_path = Path(input_path)
+        if not input_path.exists():
+            print(f"Path not found: {input_path!s}")
+            abort()
+        if not input_path.is_dir():
+            raise NotImplementedError("Please place/link desired protein files in a directory, not a file!")
+
+        return str(input_path)
+
+    if Path(input_path).name in datasets_dict:
+        input_path = BenchResources(input_path).BENCH_PDBS
+        print(f"Using pkdb dataset proteins: {input_path!s}")
+
+        return str(input_path)
+    
+    input_path = Path(input_path)
+    if not input_path.exists():
+        print(f"Path not found: {input_path!s}")
+        abort()
+    if not input_path.is_dir():
+        raise NotImplementedError("Please place/link desired protein files in a directory, not a file!")
+
+    return str(input_path)
+
+
 def update_book():
     updated_lines = []
     lines = Path(BOOK).read_text().splitlines()
@@ -188,34 +236,20 @@ def update_book():
     return
 
 
-def path_is_dir(p: str) -> Union[None, str]:
-    """Return validated path from the command line."""
-    if not len(p):
-        print("Value for 'input_path' option is required.")
-        return None
-    if not Path(p).exists():
-        print("Path not found:", p)
-        return None
-    if not Path(p).is_dir():
-        raise NotImplementedError("Please place/link desired protein files in a directory, not a file!")
-
-    return p
-
-
 def pro_parser():
     parser = argparse.ArgumentParser(
         prog="pro_batch",
-        description="""pro_batch accepts a directory containing PDB files, 
-        and executes identical MCCE runs in directories named after each 
-        respective PDB file. pro_batch creates a high-level shell script. 
+        description="""pro_batch accepts a directory containing PDB files or
+        the name of a pkdb dataset (if not run in MCCE4-Alpha), and executes identical MCCE runs
+        in directories named after each respective PDB file. pro_batch creates a high-level shell script. 
         Users then edit the shell script to their liking, and execute it 
         with the -custom flag.
         """
     )
     parser.add_argument(
         "input_path",
-        type=path_is_dir,
-        help="Path to a directory containing PDB files."
+        type=str,
+        help=inputpath_help
     )
     parser.add_argument(
             "-custom", 
@@ -241,6 +275,11 @@ def protein_batch():
     p = pro_parser()
     args = p.parse_args()
     input_path = args.input_path
+    if not input_path.strip():
+        print("Invalid: input_path must be a non-empty string.")
+        abort()
+
+    input_path = get_dataset_path(input_path)
     use_scheduler = args.sbatch
     script_path = args.custom
 
@@ -324,7 +363,7 @@ def protein_batch():
         update_book()        
     else:
         # Create the book.txt file from user files
-        book_list = "\n".join(fp.stem for fp in user_files) + "\n"
+        book_list = "\n".join(fp.stem.upper() for fp in user_files) + "\n"
         with open(BOOK, 'w') as file:
             file.write(book_list)
 

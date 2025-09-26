@@ -22,7 +22,8 @@ tests/
 # Byte-compiled / optimized / DLL files/ IDE
 .vscode/
 __pycache__
-*/__pycache__/
+*/__pycache__/*
+*/MCCE_bin/mcce4/__pycache__/*
 *.py[cod]
 *$py.class
 
