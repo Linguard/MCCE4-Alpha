@@ -5,23 +5,22 @@ Created on Thu Aug 14 3:30:00 2025
 
 @author: Gehan Ranepura
 """
-
 import argparse
-import subprocess
-import sys
-import os
-import shlex
 from datetime import datetime
+import os
+from pathlib import Path
+import shlex
+from subprocess import Popen, PIPE, run, STDOUT, CalledProcessError
+import sys
 
-def run_command(cmd, label, logfile=None):
+
+def run_command(cmd: str, label: str, logfile: str = None):
     """
     Run a command with real-time 'tee'-style logging:
       - Streams stdout/stderr to the console
       - Also writes them to logfile (if provided), with timestamps
     Accepts either a list argv (preferred) or a string (shell=True).
     """
-    from subprocess import Popen, PIPE, STDOUT
-
     print(f"\nRunning {label}:")
     is_list = isinstance(cmd, list)
     pretty = shlex.join(cmd) if is_list else cmd
@@ -44,40 +43,55 @@ def run_command(cmd, label, logfile=None):
         proc.stdout.close()
         ret = proc.wait()
         if ret != 0:
-            raise subprocess.CalledProcessError(ret, pretty)
+            raise CalledProcessError(ret, pretty)
 
         print(f"{label} completed.")
         if fh:
             fh.write(f"=== {label} completed {datetime.now().isoformat()} ===\n")
-    except subprocess.CalledProcessError:
+
+    except CalledProcessError:
         print(f"Error: {label} failed.")
         if fh:
             fh.write(f"=== {label} FAILED {datetime.now().isoformat()} ===\n")
         sys.exit(1)
+
     finally:
         if fh:
             fh.flush()
             fh.close()
+    
+    return
 
-def ensure_prot_pdb(input_pdb):
-    # Copy to prot.pdb so downstream scripts see the expected file
-    if input_pdb != "prot.pdb":
-        print(f"Copying {input_pdb} → prot.pdb")
-        subprocess.run(["cp", input_pdb, "prot.pdb"], check=True)
 
-def logpath(logs_dir, filename):
+def ensure_prot_pdb(input_pdb: str):
+    # Link input_pdb to prot.pdb so downstream scripts see the expected file
+    pdb_fp = Path(input_pdb)
+    if pdb_fp.name != "prot.pdb":
+        # Create a symbolic link to "prot.pdb"
+        prot_fp = pdb_fp.with_name("prot.pdb")
+        if prot_fp.exists():
+            if not prot_fp.is_symlink():
+                # remove hard copy first
+                prot_fp.unlink()
+                prot_fp.symlink_to(pdb_fp.name)
+            else:
+                return
+        else:
+            prot_fp.symlink_to(pdb_fp.name)
+
+    return
+
+
+def logpath(logs_dir: str, filename: str) -> str:
     return os.path.join(logs_dir, filename)
 
 # ---------------------------
 # Legacy Default MCCE4 Simulation
 # ---------------------------
-def run_legacy_pipeline(input_pdb, logs_dir):
-    # Copy to prot.pdb
-    if input_pdb != "prot.pdb":
-        print(f"Copying {input_pdb} → prot.pdb")
-        subprocess.run(["cp", input_pdb, "prot.pdb"], check=True)
+def run_legacy_pipeline(input_pdb: str, logs_dir: str):
+    ensure_prot_pdb(input_pdb)
 
-    STEP1 = f"step1.py {input_pdb} -d 4 --dry"
+    STEP1 = "step1.py prot.pdb -d 4 --dry"
     STEP2 = "step2.py -l 1 -d 4"
     STEP3 = "step3.py -s ngpb -d 4"
     STEP4 = "step4.py --xts"
@@ -87,10 +101,13 @@ def run_legacy_pipeline(input_pdb, logs_dir):
     run_command(STEP3, "STEP3", logfile=logpath(logs_dir, "step3.log"))
     run_command(STEP4, "STEP4", logfile=logpath(logs_dir, "step4.log"))
 
+    return
+
 # ---------------------------
 # Flag-driven pipeline
 # ---------------------------
-def run_param_pipeline(input_pdb, args, logs_dir):
+def run_param_pipeline(args: argparse.Namespace, logs_dir: str):
+    input_pdb = args.pdb
     ensure_prot_pdb(input_pdb)
 
     dielectric = args.d if args.d is not None else 4
@@ -114,7 +131,7 @@ def run_param_pipeline(input_pdb, args, logs_dir):
     print(f"  Logs dir: {logs_dir}\n")
 
     # ---- STEP 1
-    step1 = ["step1.py", input_pdb, "-d", str(dielectric)]
+    step1 = ["step1.py", "prot.pdb", "-d", str(dielectric)]
     if not args.wet:
         step1.append("--dry")
 
@@ -164,8 +181,10 @@ def run_param_pipeline(input_pdb, args, logs_dir):
     run_command(step3, "STEP3", logfile=logpath(logs_dir, "step3.log"))
     run_command(step4, "STEP4", logfile=logpath(logs_dir, "step4.log"))
 
-# ---------- CLI utilities ----------
+    return
 
+
+# ---------- CLI utilities ----------
 def was_passed(*names):
     """
     Returns True if any of the provided CLI flag names appear in sys.argv.
@@ -182,6 +201,7 @@ def was_passed(*names):
                     return True
     return False
 
+
 def any_pipeline_flags_passed():
     # If any of these appear, we switch to the param pipeline
     return (
@@ -191,12 +211,14 @@ def any_pipeline_flags_passed():
         was_passed("-type", "-initial", "-interval", "-n", "--ms")
     )
 
+
 def any_non_custom_flags_passed_with_custom():
     """
     Return True if --custom is combined with any disallowed flags.
     Allowed with --custom: ONLY the positional PDB and optional --sbatch.
     """
     return any_pipeline_flags_passed()
+
 
 def run_custom_script(script, input_pdb, use_sbatch):
     ensure_prot_pdb(input_pdb)
@@ -208,11 +230,11 @@ def run_custom_script(script, input_pdb, use_sbatch):
     if use_sbatch:
         # Non-blocking submission; show job id
         print("\nSubmitting custom script via SLURM (non-blocking)...")
-        res = subprocess.run(
+        res = run(
             ["sbatch", script],
             check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+            stdout=PIPE,
+            stderr=STDOUT,
             text=True
         )
         print(res.stdout.strip())
@@ -220,6 +242,9 @@ def run_custom_script(script, input_pdb, use_sbatch):
     else:
         print("\nRunning custom script via shell...")
         run_command(["bash", script], "Custom script")
+
+    return
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -248,7 +273,7 @@ Examples:
     )
 
     # Positional & custom-script options
-    parser.add_argument("pdb",      help="Input PDB file (copied to 'prot.pdb')")
+    parser.add_argument("pdb",      help="Input PDB file (linked to 'prot.pdb')")
     parser.add_argument("--custom", help="Optional shell script to run instead of default/flag pipelines")
     parser.add_argument("--sbatch", action="store_true", help="Use sbatch to submit the custom shell script (non-blocking)")
 
@@ -315,10 +340,12 @@ Examples:
 
     # If any pipeline flags were passed, use param pipeline; else legacy default
     if any_pipeline_flags_passed():
-        run_param_pipeline(args.pdb, args, logs_dir)
+        run_param_pipeline(args, logs_dir)
     else:
         run_legacy_pipeline(args.pdb, logs_dir)
 
+    return
+
+
 if __name__ == "__main__":
     main()
-
