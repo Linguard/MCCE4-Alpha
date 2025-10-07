@@ -1,0 +1,14 @@
+CONFLIST, _MN: _MNBK, _MN+2, _MNDM
+
+# Atom definition
+CONNECT, "MN  ", _MN+2: ion
+
+# Atom charges
+CHARGE, _MN+2, "MN  ": 2.000
+
+# Atom radius, dielectric boundary radius, VDW radius, and energy well depth
+RADIUS,  _MN+2, "MN  ": 1.850, 2.000, 1.850, 0.010
+
+# Conformer parameters that appear in head3.lst: ne, Em0, nH, pKa0, rxn
+CONFORMER, _MN+2: Em0=   0.0, pKa0=  0.00, ne= 0, nH= 0, rxn02= -175.150, rxn04= -85.330, rxn08= -40.419
+CONFORMER, _MNDM: Em0=   0.0, pKa0=  0.00, ne= 0, nH= 0, rxn02=0.0, rxn08=0.0, rxn04=0.0
