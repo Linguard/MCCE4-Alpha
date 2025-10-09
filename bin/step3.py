@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
 Step 3 computes energy look up table.
 The input is step2_out.pdb.
@@ -27,7 +26,6 @@ Usage examples:
     step3.py -p 6
 
 """
-
 import argparse
 from collections import defaultdict
 import json
@@ -35,17 +33,21 @@ import logging
 from multiprocessing import Pool, current_process, TimeoutError
 import os
 from pathlib import Path
-import tempfile
 import shutil
 import sys
 import time
+
 from mccesteps import record_runprm 
 from mccesteps import export_runprm
 from mccesteps import detect_runprm
 from mccesteps import restore_runprm
-import itertools
-#from pdbio import *
 from pbs_interfaces import *
+
+# Set VDW function
+if "--old_vdw" in sys.argv:
+    from pdbio import *
+else:
+    from pdbio_gr import *
 
 
 logger = logging.getLogger("step3.py")
@@ -57,12 +59,8 @@ PW_CUTOFF = 0.001  # cut off value for pairwise interaction to report
 PROGRESS_LOG = "progress_step3.log"
 
 global run_options
+global instance_name 
 
-# Set VDW function
-if "--old_vdw" in sys.argv:
-     from pdbio import *
-else:
-     from pdbio_gr import *
 
 # copied from mcce4.io_utils:
 def config_logger(step_num: int, log_level: str = "INFO"):
@@ -277,9 +275,20 @@ class Exchange:
         self.float_bnd_xyzrcp = []
         self.float_bnd_atom = []
 
+        # Add backbone of a residue for floating boundary
+        for atom in protein.residue[ir].conf[0].atom:
+            xyzrcp = ExchangeAtom(atom)
+            xyzrcp.c = 0.0
+            if run_options.s.upper() == "ML":  # overwrite the r_bound by ML number
+                xyzrcp.r = atom.float_born_radius
+            self.float_bnd_xyzrcp.append(xyzrcp)
+            self.float_bnd_atom.append([atom])
+
         for atom in protein.residue[ir].conf[ic].atom:
             xyzrcp = ExchangeAtom(atom)
             xyzrcp.c = atom.charge
+            if run_options.s.upper() == "ML":  # overwrite the r_bound by ML number
+                xyzrcp.r = atom.float_born_radius
             self.float_bnd_xyzrcp.append(xyzrcp)
             self.float_bnd_atom.append([atom])
 
@@ -300,6 +309,8 @@ class Exchange:
                 for atom in protein.residue[ires].conf[ic].atom:
                     xyzrcp = ExchangeAtom(atom)
                     xyzrcp.c = atom.charge
+                    if run_options.s.upper() == "ML":  # overwrite the r_bound by ML number
+                        xyzrcp.r = atom.born_radius
                     self.single_bnd_xyzrcp.append(xyzrcp)
                     self.single_bnd_atom.append([atom])
             else:
@@ -315,6 +326,8 @@ class Exchange:
                     # just for boundary
                     for atom in protein.residue[ires].conf[i_useconf].atom:
                         xyzrcp = ExchangeAtom(atom)
+                        if run_options.s.upper() == "ML":  # overwrite the r_bound by ML number
+                            xyzrcp.r = atom.born_radius
                         self.single_bnd_xyzrcp.append(xyzrcp)
                         self.single_bnd_atom.append([atom])
 
@@ -354,6 +367,8 @@ class Exchange:
                 for atom in protein.residue[ires].conf[ic].atom:
                     xyzrcp = ExchangeAtom(atom)
                     xyzrcp.c = atom.charge
+                    if run_options.s.upper() == "ML":  # overwrite the r_bound by ML number
+                        xyzrcp.r = atom.born_radius
                     self.multi_bnd_xyzrcp.append(xyzrcp)
                     self.multi_bnd_atom.append([atom])
 
@@ -368,6 +383,8 @@ class Exchange:
                     for iconf in range(1, len(protein.residue[ires].conf)):
                         for atom in protein.residue[ires].conf[iconf].atom:
                             xyzrcp = ExchangeAtom(atom)
+                            if run_options.s.upper() == "ML":  # overwrite the r_bound by ML number
+                                xyzrcp.r = atom.born_radius
                             # test if this atom existed within this residue already
                             found = False
                             for ib in range(len(residue_bnd_xyzrcp)):
@@ -443,6 +460,88 @@ class Exchange:
         return
 
 
+def calculate_born_radius(protein):
+    """
+    Calculate Born radius for atoms with Machine Learning
+    Background atoms are the native atoms (conf 0 and 1)
+    Background atoms born radii are calculated at background settings
+    Non-background atoms (conf 1 and above) are using background atoms as reference.
+    """
+    from ml_pbs import ML_Solver
+    from ml_pbs import ATOM_RADII, ATOM_RADIUS_UNKNOWN
+
+    # Revise r_bound of atoms
+    for res in protein.residue:
+        for conf in res.conf:
+            for atom in conf.atom:
+                if atom.name.startswith("H") and len(atom.name) == 4:
+                    element = " H"
+                else:
+                    element = atom.name[0:2]
+                # Overwrite r_bound with atom radius
+                if element in ATOM_RADII:
+                    atom.r_bound = ATOM_RADII[element]
+                else:
+                    atom.r_bound = ATOM_RADIUS_UNKNOWN
+
+    # Efficiently initialize born_radius and float_born_radius for all atoms
+    for res in protein.residue:
+        for conf in res.conf:
+            for atom in conf.atom:
+                atom.born_radius = atom.float_born_radius = 0.0
+
+    # Collect background conformers
+    logger.info("   Working on native conformers conf[0] and conf[1].")
+    background_conformers = []
+    for res in protein.residue:
+        for conf in res.conf[:2]:
+            background_conformers.append(conf)
+    # collect atoms from conformers and make a pqr list
+    background_atoms = []
+    for conf in background_conformers:
+        background_atoms.extend(conf.atom)
+    pqr_data = []
+    for atom in background_atoms:
+        pqr_data.append((atom.xyz[0], atom.xyz[1], atom.xyz[2], atom.charge, atom.r_bound))
+    solver = ML_Solver()
+    solver.load_pqr(pqr_data, type="list")
+    solver.epsilon_in = 4.0
+    solver.epsilon_out = 80.0
+    born_radii = solver.solve()
+    for atom, born_radius in zip(background_atoms, born_radii):
+        atom.born_radius = born_radius
+
+    # Calculate non-background atoms' Born radii using background atoms as reference
+    for res in protein.residue:
+        # Include backbone atoms as float
+        conf0_atoms = res.conf[0].atom
+        for conf in res.conf[1:]: # Start from 1 because we need the float born radii for conformer 1
+            print("   Working on conformer %s" % conf.confID)
+            # float atoms only
+            float_atoms = conf.atom
+            pqr_data = [(atom.xyz[0], atom.xyz[1], atom.xyz[2], atom.charge, atom.r_bound) for atom in float_atoms + conf0_atoms]
+            solver = ML_Solver()
+            solver.load_pqr(pqr_data, type="list")
+            solver.epsilon_in = 4.0
+            solver.epsilon_out = 80.0
+            born_radii = solver.solve()
+            for atom, born_radius in zip(float_atoms, born_radii[:len(float_atoms)]):
+                atom.float_born_radius = born_radius
+            # float atoms in the reference environment
+            reference_atoms = [atom for atom in background_atoms if atom.resID != res.resID or atom.confID[3:5] == "BK"]  # Keep background atoms
+            pqr_data = [(atom.xyz[0], atom.xyz[1], atom.xyz[2], atom.charge, atom.r_bound) for atom in float_atoms + reference_atoms]
+            solver = ML_Solver()
+            solver.load_pqr(pqr_data, type="list")
+            solver.epsilon_in = 4.0
+            solver.epsilon_out = 80.0
+            born_radii = solver.solve()
+            # Assign born_radius to float_atoms from the first part of born_radii
+            for atom, born_radius in zip(float_atoms, born_radii[:len(float_atoms)]):
+                atom.born_radius = born_radius
+
+    return
+
+
 def def_boundary(ir, ic):
     boundary = Exchange(protein)
 
@@ -515,16 +614,6 @@ def pbe(iric):
         try:
             os.chdir(tmp_pbe)
 
-            # detect file .ld_library_path
-            src = cwd.joinpath(".ld_library_path")
-            dst = Path(tmp_pbe).joinpath(".ld_library_path")
-            if src.is_file():
-                shutil.copy(src, dst)
-            else:
-                # remove this file in tmp dir:
-                if dst.is_file():
-                    dst.unlink()
-
             # decide which pb solver, delphi = delphi legacy
             if run_options.s.upper() == "DELPHI":
                 logger.info(
@@ -537,13 +626,25 @@ def pbe(iric):
                 except Exception as e:
                     logger.critical(f"Delphi run failed for conformer {confid}: {e}", exc_info=True)
                     return f"[ERROR] {e}"
-                
+
+            elif run_options.s.upper() == "ML":
+                logger.info(
+                    "%s: Calling ML/GB to calculate conformer %s" % (pid.name, confid)
+                )
+                open(cwd.joinpath(PROGRESS_LOG), "a").write("%s: Calling ML to calculate conformer %s\n" % (pid.name, confid))
+                pbs_ml = PBS_ML()
+                try:
+                    rxn0, rxn = pbs_ml.run(bound, run_options)
+                except Exception as e:
+                    logger.critical(f"ML run failed for conformer {confid}: {e}", exc_info=True)
+                    return f"[ERROR] {e}"
+
             elif run_options.s.upper() == "NGPB":
                 logger.info(
                     "%s: Calling ngpb to calculate conformer %s in %s" % (pid.name, confid, tmp_pbe)
                 )
                 open(cwd.joinpath(PROGRESS_LOG), "a").write("%s: Calling ngpb to calculate conformer %s in %s\n" % (pid.name, confid, tmp_pbe))
-                pbs_ngpb = PBS_NGPB()
+                pbs_ngpb = PBS_NGPB(instance_name)
                 try:
                     rxn0, rxn = pbs_ngpb.run(bound, run_options)
                 except Exception as e:
@@ -641,6 +742,7 @@ def pbe(iric):
                 p = bound_multi.p * atom.charge
                 if abs(p) > 0.0001:
                     pw_multi[pw_confname] += p
+
 
         # convert to Kcal
         pw_multi.update((key, value / KCAL2KT) for key, value in pw_multi.items())
@@ -1212,8 +1314,8 @@ def cli_parser():
         "-s",
         metavar="pbs_name",
         default="ngpb",
-        choices=["delphi", "ngpb", "zap", "apbs", "template"],
-        help="PBE solver; choices: ngpb, delphi, zap; default: %(default)s.",
+        choices=["delphi", "ngpb", "zap", "apbs", "ml", "template"],
+        help="PBE solver; choices: ngpb, delphi, zap, ml; default: %(default)s.",
     )
     parser.add_argument(
         "-t",
@@ -1293,6 +1395,7 @@ def cli_parser():
 
 
 if __name__ == "__main__":
+
     parser = cli_parser()
     args = parser.parse_args()
 
@@ -1312,6 +1415,9 @@ if __name__ == "__main__":
 
     logger.info("   Process run time options & convert step2_out.pdb.")
     run_options = RunOptions(args)
+    if run_options.s.upper() == "ML":
+        run_options.fly = True  # force fly to be true for ML
+
     # print(vars(run_options))
 
     # environment and ftpl
@@ -1328,68 +1434,46 @@ if __name__ == "__main__":
     protein = Protein()
     protein.loadpdb(run_options.inputpdb)
     protein.update_confcrg()
-    logger.info("   Time needed: %d seconds.", time.time() - start_t)
+    if args.s.upper() == "ML":
+        logger.info("   Using machine learning model as PBE solver, calculating born radius.")
+        calculate_born_radius(protein)
+        # Save results to a file
+        with open("born_radii.csv", "w") as f:
+            header = [f"CONFID,NAME,X,Y,Z,CHARGE,BOUND_RADIUS,FLOAT_BORN_RADIUS,BORN_RADIUS\n"]
+            f.writelines(header)
+            for res in protein.residue:
+                for conf in res.conf:
+                    for atom in conf.atom:
+                        f.write(f"{conf.confID},\"{atom.name}\",{atom.xyz[0]:.3f},{atom.xyz[1]:.3f},{atom.xyz[2]:.3f},{atom.charge:.3f},{atom.r_bound:.3f},{atom.float_born_radius:.3f},{atom.born_radius:.3f}\n")
     start_t = time.time()
 
-    # Prepare input for PB solver: common_boundary, sites to receive potential, and PB conditions
-    # make conformer list with their corresponding ir and ic. This list or (ir, ic) will be passed
-    # as an array that multiprocess module will take in as work load.
-    
     if run_options.s.upper() == "NGPB":
-        # Fail fast:
-        container_image = "NextGenPB_MCCE4.sif"
-        # Find the container path (relies on the .sif file being executable)
-        container_path = shutil.which(container_image)
-        if not container_path:
-            logger.critical(f"Container image {container_image!s} not found. Exiting.")
-            sys.exit(1)
-
         bind_path = run_options.t 
         if os.path.commonpath([bind_path, "/tmp"]) == "/tmp":
             parent_dir = bind_path
         else:
             parent_dir = os.path.dirname(bind_path)
 
-        instance_name = "my_instance"
-        check_cmd = ["apptainer", "instance", "list"]
-        instance_running = False
+        instance_name = f"ngpb_{os.getpid()}_{int(time.time())}"
+        # Find the container path (relies on the .sif file being executable)
+        container_path = shutil.which("NextGenPB_MCCE4.sif")
         try:
-            check_result = subprocess.run(check_cmd, capture_output=True, text=True, check=True)
-            for line in check_result.stdout.splitlines():
-                parts = line.strip().split()
-                if len(parts) >= 1 and parts[0] == instance_name:
-                    instance_running = True
-                    break
-
-            if instance_running:
-                logger.info(f"Instance {instance_name!s} already running. Stopping it...")
-                stop_cmd = ["apptainer", "instance", "stop",  f"{instance_name!s}"]
-                try:
-                    subprocess.run(stop_cmd, check=True)
-                    logger.info(f"Stopped instance {instance_name!s}.")
-                except subprocess.CalledProcessError as e:
-                    logger.error(f"Error stopping instance '{instance_name}': {e.stderr.strip()}")
-                    # TODO: Decide whether to re-raise or handle differently based on requirements
-                    # raise e 
+            # Create an instance for this submission:
+            result = subprocess.run(
+                    f"apptainer instance start --bind {parent_dir}:{parent_dir} {container_path} {instance_name}",
+                    shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                )
         except subprocess.CalledProcessError as e:
-            logger.error(f"Error checking instance list: {e.stderr.strip()}")
-            # TODO: Decide whether to re-raise or handle differently based on requirements
-            # raise e
-
-        try:
-            start_cmd = ["apptainer", "instance", "start", "--bind",
-                         f"{parent_dir}:{parent_dir}", container_path, instance_name]
-            logger.debug(start_cmd)
-
-            result = subprocess.run(start_cmd,
-                                    shell=True, check=True,
-                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE
-                                    )
-        except subprocess.CalledProcessError as e:
-            logger.critical(f"Failed to start apptainer instance: {e.stderr.decode().strip()}")
-            sys.exit("Could not start apptainer instance. Exiting.")
+            logger.error(f"Failed to start apptainer instance: {e.stderr.decode().strip()}")
+            # Does not matter, processing goes on with, possibly an instance "bound" to a
+            # different parent_dir??
 
     if not args.skip_pb:
+        # Prepare input for PB solver:
+        #   common_boundary, sites to receive potential, and PB conditions;
+        #   make conformer list with their corresponding ir and ic.
+        #   This list of (ir, ic) will be passed as an array to the multiprocess module as work load.
+
         work_load = []
         counter = 1
         for ir in range(len(protein.residue)):
@@ -1424,7 +1508,6 @@ if __name__ == "__main__":
         if results:
             logger.warning("    Error PBE solving on %s" % str(results))
 
-
         cwd = os.getcwd()
         logger.info("   Time needed: %d seconds.", time.time() - start_t)
 
@@ -1432,7 +1515,8 @@ if __name__ == "__main__":
         start_t = time.time()
 
     if run_options.s.upper() == "NGPB":
-        os.system("apptainer instance stop my_instance")
+        subprocess.run(["apptainer", "instance", "stop", instance_name], check=False)
+
         
     logger.info("   Processing ele pairwise interaction...")
     ele_matrix = postprocess_ele(protein)
@@ -1466,8 +1550,9 @@ if __name__ == "__main__":
     start_t = time.time()
 
     logger.info("   Calculating vdw ...")
-    protein.calc_vdw_virtual(delta=args.vdw_relax)  # Call subroutine that creates vdw virtual conformers
-    # For efficiency reason, the vdw pairwise table is a matrix protein.vdw_pw[conf1.i,conf2.i]
+    # Call subroutine that creates vdw virtual conformers:
+    protein.calc_vdw_virtual(delta=args.vdw_relax)
+    # For efficiency reason, the vdw pairwise table is a matrix: protein.vdw_pw[conf1.i,conf2.i]
     logger.info("   Time needed: %d seconds.", time.time() - start_t)
     start_t = time.time()
 
@@ -1476,12 +1561,12 @@ if __name__ == "__main__":
     logger.info("   Time needed: %d seconds.", time.time() - start_t)
     start_t = time.time()
 
-    if args.vdw_relax:  # One assumption is these virtual conformers were already made by cal_vdw_virtual
+    if args.vdw_relax:
+        # One assumption: these virtual conformers were already made by cal_vdw_virtual
         logger.info("   Calculating torsion energy for VDW virtual conformers ...")
         protein.calc_tors_virtual()
         logger.info("   Time needed: %d seconds.", time.time() - start_t)
         start_t = time.time()
-
 
     # Assemble output files, order sensitive as head3.lst subroutine will make serial for
     # conformers later used by opp files
