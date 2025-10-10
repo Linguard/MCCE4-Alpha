@@ -1,7 +1,6 @@
 #!/bin/sh
 
 echo "MCCE4 'Quick Install' Script"
-echo ""
 
 set -e
 
@@ -14,7 +13,6 @@ ENV_NAME="mc4"
 
 # Use the -h switch to get help on usage.
 help_msg() {
-  echo ""
   echo "Usage:"
   echo ""
   echo "sh ./MCCE_bin/$(basename "$0") -h"
@@ -22,7 +20,8 @@ help_msg() {
   echo ""
   echo " -h                 : Display this help message & exit."
   echo " env_name (optional): Custom name for the conda environment to create (default is 'mc4')."
-  echo "                    : Required if you already have a conda environment named 'mc4'."
+  echo "                    : If you already have a conda environment named 'mc4', it won't be modified;"
+  echo "                    : yet, it will need to comply with the requirements in $CLONE_PATH/mc4.yml."
   echo ""
   exit 0
 }
@@ -65,7 +64,7 @@ then
       DOWNLOAD_CMD="curl"
   else
       echo "Error: Neither 'wget' nor 'curl' could be found."
-      echo "Please install one of them to download the NGPB container image."
+      echo "TODO: Please, install one of them to download the NGPB container image."
       exit 1
   fi
   echo ""
