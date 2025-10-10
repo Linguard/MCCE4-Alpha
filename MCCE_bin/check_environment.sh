@@ -11,9 +11,9 @@ echo "MCCE4 clone: $CLONE"
 echo "MCCE4 clone path: $CLONE_PATH"
 echo ""
 echo "Script to check pre-requisites on the current system:"
-echo " - conda"
-echo "   - conda env 'mc4', default name in mc4.yml file"
-echo " - apptainer, the container app for MCCE4 default PBE solver, NGPB"
+echo " * conda"
+echo "   + conda env 'mc4', default name in mc4.yml file"
+echo " * apptainer, the container app for MCCE4 default PBE solver, NGPB"
 echo ""
 echo "NOTE: Any 'TODO' line listed below means that you cannot run any simulation"
 echo "      using $CLONE unless you perform those actions."
@@ -26,13 +26,14 @@ echo "Checking for conda..."
 if ! command -v conda >/dev/null 2>&1; then
     echo "  WARNING: conda is required, but not found on your system."
     echo "  TODO: Please install miniconda."
+    echo "  See: https://www.anaconda.com/docs/getting-started/miniconda/install"
 else
     echo "  Conda found."
     ENVS=$(conda env list)
     if echo "$ENVS" | grep -q "$ENV_NAME"; then
         echo "  Env '$ENV_NAME' already exists. Make sure it complies with $CLONE_PATH/mc4.yml."
     else
-        echo "  Env '$ENV_NAME' will be created by a quick-install script in $CLONE/MCCE_bin (unless script receives a different name)."
+        echo "  Env '$ENV_NAME' will be created by script quick-install.sh in $CLONE/MCCE_bin (unless script receives a different env name)."
     fi
 fi
 
@@ -56,3 +57,11 @@ else
         echo "  See: https://apptainer.org/docs/admin/main/installation.html#mac"
     fi
 fi
+
+echo ""
+echo "----------------------------------------------------------------------------"
+echo ""
+echo "This is the usage of the next script to run, quick_install.sh."
+echo "Output of quick_install.sh -h:"
+echo ""
+$SCRIPT_DIR/quick_install.sh -h
