@@ -18,12 +18,12 @@ __🛠️ Install Now:__ [Installation](https://gunnerlab.github.io/mcce4_tutori
    git clone https://github.com/GunnerLab/MCCE4-Alpha.git; cd MCCE4-Alpha
   ```
   
-  2. Check if you have pre-requisites such as `conda` and `apptainer`. If not. a TODO list with instructions is displayed. Run:
+  2. Check if you have pre-requisites such as `conda` and `apptainer`. If not, a TODO list with instructions is displayed. Run:
   ```
    sh ./MCCE_bin/check_environment.sh
   ```
 
-  3. If no "TODOs" to do, then run this script to download NGPB's image file and create a conda environment for MCCE4:
+  3. If no "TODOs" to do, then run this script to download MCCE PBE solver (NGPB) image file and create a conda environment for MCCE4:
   ```
    sh ./MCCE_bin/quick_install.sh
   ``` 
