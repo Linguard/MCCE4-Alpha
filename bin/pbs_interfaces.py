@@ -10,8 +10,10 @@ PB Solver Interface Module
 
 import logging
 import math
+import numpy as np
 import os
 from pathlib import Path
+from pyexpat import features
 import struct
 import subprocess
 import sys
@@ -186,6 +188,7 @@ class PBS_DELPHI:
         else:
             depth = math.ceil(math.log(scale)/math.log(2.0)) + 1
 
+        #print(dm, depth, scale)
         return depth
 
     def write_fort15(self, xyzrcp):
@@ -269,52 +272,86 @@ class PBS_DELPHI:
         #print(vars(bound))
 
         # Caclulate rxn0 using float boundary condition
-        rxn0 = 0.0
-        self.salt = run_options.salt
-        if run_options.fly:
-            self.write_fort13(bound.float_bnd_xyzrcp)
-            self.write_fort15(bound.float_bnd_xyzrcp)
-            center = [0.0, 0.0, 0.0]
-            weight = 0.0
-            depth = 1
-            for p in bound.float_bnd_xyzrcp:
-                w = abs(p.c)
-                if w > 0.00001:
-                    center[0] += p.x * w
-                    center[1] += p.y * w
-                    center[2] += p.z * w
-                    weight += w
+        depth = self.depth(bound)
+        logger.info("Delphi focusing depth: %d" % depth)
+        rxns = []
+        # floating boundary condition
+        self.write_fort13(bound.float_bnd_xyzrcp)
+        self.write_fort15(bound.float_bnd_xyzrcp)
 
-            if weight > 0.000001:
-                center = [c/(weight+0.000001) for c in center]
-            else:
-                logger.error("PB solver shouldn't run a conformer with no charged atom.")
+        # fort.27
+        center = [0.0, 0.0, 0.0]
+        weight = 0.0
+        for p in bound.float_bnd_xyzrcp:
+            w = abs(p.c)
+            if w > 0.00001:
+                center[0] += p.x * w
+                center[1] += p.y * w
+                center[2] += p.z * w
+                weight += w
 
-            with open("fort.27", "w") as fh:
-                fh.write("ATOM  %5d  C   CEN  %04d    %8.3f%8.3f%8.3f\n" % (1, 1, center[0], center[1], center[2]))
+        if weight > 0.000001:
+            center = [c/(weight+0.000001) for c in center]
+        else:
+            logger.error("PB solver shouldn't run a conformer with no charged atom.")
 
-            # fort.10
-            self.epsilon_prot = run_options.d
-            self.epsilon_solv = run_options.do
+        with open("fort.27", "w") as fh:
+            fh.write("ATOM  %5d  C   CEN  %04d    %8.3f%8.3f%8.3f\n" % (1, 1, center[0], center[1], center[2]))
+
+        # fort.10
+        self.epsilon_prot = run_options.d
+        self.epsilon_solv = run_options.do
+        self.salt=run_options.salt
+        with open("fort.10", "w") as fh:
+            fh.write("gsize=%d\n" % self.grids_delphi)
+            fh.write("scale=%.2f\n" % (self.grids_per_ang/2**(depth-1)))
+            fh.write("in(unpdb,file=\"fort.13\")\n")
+            fh.write("indi=%.1f\n" % self.epsilon_prot)
+            fh.write("exdi=%.1f\n" % self.epsilon_solv)
+            fh.write("ionrad=%.1f\n" % self.ionrad)
+            fh.write("salt=%.2f\n" % self.salt)
+            fh.write("bndcon=2\n")
+            fh.write("center(777, 777, 0)\n")
+            fh.write("out(frc,file=\"run01.frc\")\n")
+            fh.write("out(phi,file=\"run01.phi\")\n")
+            fh.write("site(a,c,p)\n")
+            fh.write("energy(g,an,sol)\n")   # g for grid energy, sol for corrected rxn
+
+        # 1st delphi run
+        result = subprocess.run([self.exe], capture_output=True, text=True)
+        if result.returncode != 0:
+            logger.critical(f"Delphi failed with error:\n{result.stderr}")
+            sys.exit(1)
+
+        rxns.append(self.collect_rxn(result.stdout))
+
+        # subsequent delphi runs
+        for i in range(1, depth):
             with open("fort.10", "w") as fh:
                 fh.write("gsize=%d\n" % self.grids_delphi)
-                fh.write("scale=%.2f\n" % (self.grids_per_ang/2**(depth-1)))
+                fh.write("scale=%.2f\n" % (self.grids_per_ang/2**(depth-1-i)))
                 fh.write("in(unpdb,file=\"fort.13\")\n")
+                fh.write("in(phi,file=\"run%02d.phi\")\n" % i)
                 fh.write("indi=%.1f\n" % self.epsilon_prot)
                 fh.write("exdi=%.1f\n" % self.epsilon_solv)
                 fh.write("ionrad=%.1f\n" % self.ionrad)
                 fh.write("salt=%.2f\n" % self.salt)
-                fh.write("bndcon=2\n")
+                fh.write("bndcon=3\n")
                 fh.write("center(777, 777, 0)\n")
-                #fh.write("out(frc,file=\"run01.frc\")\n")
-                #fh.write("out(phi,file=\"run01.phi\")\n")
+                fh.write("out(frc,file=\"run%02d.frc\")\n" % (i+1))
+                fh.write("out(phi,file=\"run%02d.phi\")\n" % (i+1))
                 fh.write("site(a,c,p)\n")
-                fh.write("energy(g,an,sol)\n")   # g for grid energy, sol for corrected rxn
+                fh.write("energy(g,an,sol)\n")  # g for grid energy, sol for corrected rxn
 
-            # 1st and only delphi run
             result = subprocess.run([self.exe], capture_output=True, text=True)
-            rxn0 = self.collect_rxn(result.stdout)
+            if result.returncode != 0:
+                logger.critical(f"Delphi failed with error:\n{result.stderr}")
+                sys.exit(1)
 
+            rxns.append(self.collect_rxn(result.stdout))
+        rxn0 = min(rxns)
+
+        # single side chain boundary condition
         depth = self.depth(bound)
         logger.info("Delphi focusing depth: %d" % depth)
         rxns = []
@@ -471,7 +508,7 @@ class PBS_DELPHI:
 
         # collect results from frc files
         self.collect_phi(depth, bound.multi_bnd_xyzrcp)
-
+        #print(f"depth: {depth}, rxn0: {rxn0}, rxns: {rxns}")
         return (rxn0, min(rxns))
 
 
@@ -479,10 +516,10 @@ class PBS_NGPB:
     """
     NGPB interface
     """
-    def __init__(self):
+    def __init__(self,instance_name):
         # consider loading these parameters from a file
         #self.exe = ['mpirun', '-np', '1', 'poisson_boltzmann', '--potfile', 'options.pot', '--pqrfile']
-        self.exe = ['apptainer', 'exec', 'instance://my_instance', 'ngpb', '--potfile', 'options.pot', '--pqrfile']
+        self.exe = ['apptainer', 'exec', f'instance://{instance_name}', 'ngpb', '--potfile', 'options.pot', '--pqrfile']
         
         self.mesh_shape = 3
         self.scale = 1.5
@@ -506,10 +543,9 @@ class PBS_NGPB:
         self.surface_type = 0 
         self.stern_layer_thickness = 2.0
         self.radius_probe = 1.4
-        # get environment variables and set LD_LIBRARY_PATH from saved value
+        # get environment variables
         self.my_env = os.environ.copy()
-        if os.path.isfile(".ld_library_path"):
-            self.my_env["LD_LIBRARY_PATH"] = open(".ld_library_path").read().strip()
+
         return
     
     def write_option_file(self, center, number_grid, energy, atoms_w):
@@ -1000,6 +1036,51 @@ class PBS_ZAP:
         self.collect_phi(apot, bound.multi_bnd_xyzrcp)
 
         return (rxn0, rxn)
+
+class PBS_ML:
+    """
+    Machine Learning PBS interface
+    """ 
+    def __init__(self):
+        self.epsilon_prot = 4.0  # default value, be overwritten by run_options
+        self.epsilon_solv = 80.0
+
+         
+    def run(self, bound, run_options):
+        """PBE solver interface for Machine Learning.
+        Generate site p in both boundary conditions and
+        return reference rxn0, and rxn in single boundary condition.
+        Input:
+            bound - dielectric boundary object
+            run_options - command options in dictionary
+        Returns:
+            -  A 2-tuple: rxn0, rxn: the most negative value of the focusing runs 
+        """
+        from ml_pbs import pqr2rxn, pqr2pot, K_rxn
+
+
+        # Update dielectric constants for ML
+        e_prot = run_options.d
+        e_solv = run_options.do
+
+        # Use float_bnd_xyzrcp for rxn0
+        pqrs = np.array([[p.x, p.y, p.z, p.c, p.r] for p in bound.float_bnd_xyzrcp])
+        rxn0 =  pqr2rxn(pqrs, e_prot, e_solv)
+
+        # Use single_bnd_xyzrcp for rxn
+        pqrs = np.array([[p.x, p.y, p.z, p.c, p.r] for p in bound.single_bnd_xyzrcp])
+        rxn = pqr2rxn(pqrs, e_prot, e_solv)
+        site_potentials = pqr2pot(pqrs, e_prot, e_solv)
+        for atom, pot in zip(bound.single_bnd_xyzrcp, site_potentials):
+            atom.p = pot
+
+        # Use multi_bnd_xyzrcp for site potential
+        pqrs = np.array([[p.x, p.y, p.z, p.c, p.r] for p in bound.multi_bnd_xyzrcp])
+        site_potentials = pqr2pot(pqrs, e_prot, e_solv)
+        for atom, pot in zip(bound.multi_bnd_xyzrcp, site_potentials):
+            atom.p = pot
+
+        return rxn0, rxn
 
 
 class PBS_APBS:
