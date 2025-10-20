@@ -1,27 +1,30 @@
-#!/bin/sh
-
-echo "MCCE4 'Quick Install' Script"
+#!/bin/bash
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CLONE_PATH="$(dirname "$SCRIPT_DIR")"
-REPO_bin="$CLONE_PATH/bin"
-
 CLONE="$(basename "$CLONE_PATH")"
+if [[ "$(uname -s)" != "Linux" ]]; then
+  echo "$CLONE only runs on Linux."
+  exit 1
+fi
+REPO_bin="$CLONE_PATH/bin"
 ENV_NAME="mc4"
+RELEASE="NextGenPB_v1.0.0"
+
+echo "$CLONE 'Quick Install' Script"
 
 # Use the -h switch to get help on usage.
 help_msg() {
+  echo ""
   echo "Usage:"
+  echo "bash ./MCCE_bin/$(basename "$0")"
   echo ""
-  echo "sh ./MCCE_bin/$(basename "$0") -h"
-  echo "sh ./MCCE_bin/$(basename "$0") [env_name]"
-  echo ""
-  echo " -h                 : Display this help message & exit."
-  echo " env_name (optional): Custom name for the conda environment to create (default is 'mc4')."
-  echo "                    : If you already have a conda environment named 'mc4', it won't be modified;"
-  echo "                    : yet, it will need to comply with the requirements in $CLONE_PATH/mc4.yml."
+  echo "Help option:"
+  echo " -h  : Display this help message & exit."
+  echo "     : If you already have a conda environment named 'mc4', it won't be modified;"
+  echo "     : yet, it will need to comply with the requirements in $CLONE_PATH/mc4.yml."
   echo ""
   exit 0
 }
@@ -35,168 +38,156 @@ while getopts "h" opt; do
       exit 1
   esac
 done
-# Shift arguments to access possible env_name after options processing
-shift $(( OPTIND - 1 ))
-# Get arguments from command line
-env_name=""
-if [ -n "$1" ];
-then
-  env_name="$1"
-  echo "User env: $env_name"
-fi
 
 echo ""
-# Name of the compiled image when Makefile is used:
-sif_mc4="$REPO_bin/NextGenPB_MCCE4.sif"
-# Name of the downloaded generic image & source url:
-sif_file="$REPO_bin/NextGenPB.sif"
-sif_url="https://github.com/concept-lab/NextGenPB/releases/download/NextGenPB_v1.0.0/NextGenPB.sif"
-
-DOWNLOAD_CMD=""
-if [ ! -f "$sif_file" ];
-then
-  echo "Image file not found. Checking for a download tool (curl or wget)..."
-  if command -v wget >/dev/null 2>&1;
-  then
-      DOWNLOAD_CMD="wget"
-  elif command -v curl >/dev/null 2>&1;
-  then
-      DOWNLOAD_CMD="curl"
-  else
-      echo "Error: Neither 'wget' nor 'curl' could be found."
-      echo "TODO: Please, install one of them to download the NGPB container image."
-      exit 1
-  fi
+# Check for curl download tool needed for apptainer installation:
+if ! command -v curl >/dev/null 2>&1; then
+  echo "STOP: Download tool 'curl' could not be found."
+  echo "TODO: Please, install it with the following commands, then re-run the quick_install script:"
+  echo "  sudo apt update "
+  echo "  sudo apt install curl "
+  echo "  cd $CLONE_PATH "
   echo ""
-  echo "Getting NextGenPB generic container image with $DOWNLOAD_CMD from $sif_url..."
-  if [ "$DOWNLOAD_CMD" = "curl" ]; then
-      curl -L -o "$sif_file" "$sif_url" || { echo "Failed to download NGPB image with curl"; exit 1; }
-  else # wget
-      wget -O "$sif_file" "$sif_url" || { echo "Failed to download NGPB image with wget"; exit 1; }
-  fi
-  echo "Soft-linking the generic image as 'NextGenPB_MCCE4.sif'"
-  ln -sf "$sif_file" "$sif_mc4"
+  exit 1
+fi
+
+NO_APPTAINER=1
+export0=""
+echo ""
+echo "Checking for apptainer (container app for NGPB)..."
+if command -v apptainer >/dev/null 2>&1; then
+  NO_APPTAINER=0
+  echo "  Container app 'apptainer' found."
 else
-  echo "  NGPB image file already exists: $sif_file"
-  echo "  Delete it before re-running the script if you need to replace it."
+  echo "  Container app 'apptainer' is not found on your system."
+  if ! command -v rpm2cpio >/dev/null 2>&1; then
+    echo "STOP: The unprivileged installation of apptainer requires rpm2cpio and cpio tools, install them with these"
+    echo "commands, then re-run the quick_install script:"
+    echo "  sudo apt-get install rpm2cpio"
+    echo "  sudo apt-get install cpio"
+    echo ""
+    exit 1
+  fi
+  echo "Installing apptainer..."
+  curl -s https://raw.githubusercontent.com/apptainer/apptainer/main/tools/install-unprivileged.sh | bash -s - "$HOME/apptainer"
+  NO_APPTAINER=0
+  export0="export PATH=\"$HOME/apptainer/bin:\$PATH\""
+fi
+
+if [[ "$NO_APPTAINER" -eq 0 ]]; then
+  echo ""
+  echo "Checking for NGPB image file..."
+  # Name of the compiled image when Makefile is used or as link target to generic sif:
+  sif_mc4="$REPO_bin/NextGenPB_MCCE4.sif"
+  if [[ -f "$sif_mc4" ]]; then
+    echo "  NextGenPB_MCCE4.sif is already installed."
+    # # check if "$sif_mc4" is soft-linked & to "$sif_file":
+    # if [[ -L "$sif_mc4" ]]; then
+    #   resolved_target="$(readlink -f "$sif_mc4")"
+    #   if [[ "$resolved_target" != "$(readlink -f "$sif_file")" ]]; then
+    #     ln -sf "$sif_file" "$sif_mc4"
+    #   fi
+    # fi
+  else
+    # Name of the downloaded generic image & source url:
+    sif_file="$REPO_bin/NextGenPB.sif"
+    if [[ -f "$sif_file" ]]; then
+      echo "  NGPB generic image file already exists: $sif_file"
+      echo "  Delete it then re-run the script if you want to replace it."
+      echo ""
+    else
+      echo "Getting NextGenPB generic container image from $sif_url (~1.5GB)..."
+      sif_url="https://github.com/concept-lab/NextGenPB/releases/download/$RELEASE/NextGenPB.sif"
+      #if [[ "$DOWNLOAD_CMD" = "curl" ]]; then
+      curl -L -o "$sif_file" "$sif_url" || { echo "Failed to download NGPB image with curl"; exit 1; }
+      #else # wget
+      #  wget -O "$sif_file" "$sif_url" || { echo "Failed to download NGPB image with wget"; exit 1; }
+      fi
+    fi
+    echo "  Soft-linking the generic image as 'NextGenPB_MCCE4.sif'"
+    ln -sf "$sif_file" "$sif_mc4"
+  fi
 fi
 
 echo ""
-echo "ATTENTION:"
-echo "  MCCE4-Alpha comes with precompiled 'mcce' and 'delphi' executable files to simplify the installation."
-echo "  These files and the generic NGPB image MAY NOT WORK on your system, but you should try them... as they might!"
-echo ""
-echo "  Please refer to the Installation guide to obtain compiled versions for your system."
+echo "Checking for conda..."
+rc_file="$HOME/.bashrc"
+if [[ ! -f "$rc_file" ]]; then
+  touch "$rc_file"
+fi
+DO_CONDA=0
+if ! command -v conda >/dev/null 2>&1; then
+  echo "STOP: conda is required, but not found on your system."
+  echo "TODO: Please install miniconda with the following commands, then re-run this script:"
+  echo "  cd ~ "
+  echo "  curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh "
+  # -b for batch mode: yes to all questions
+  echo "  bash ~/Miniconda3-latest-Linux-x86_64.sh -b "
+  echo "  ~/miniconda3/bin/conda init bash "
+  echo "  source ~/.bashrc "
+  echo "  cd $CLONE_PATH "
+  echo ""
+  echo "See: https://www.anaconda.com/docs/getting-started/miniconda/install"
+else
+  echo "  Conda found."
+  DO_CONDA=1
+fi
+
 echo ""
 echo "Conda environment creation..."
-if command -v conda >/dev/null 2>&1;
-then
-    DO_CONDA=1
-else
-    DO_CONDA=0
-    echo "'conda' could not be found. Please run this script:"
-    echo " sh ./MCCE_bin/check_environment.sh"
-    echo ""
-    echo "Skipping conda env creation."
-fi
-
-if [ "$DO_CONDA" -eq 1 ];
-then
-  ENVS=$(conda env list)
-  if [ -z "$env_name" ];
-  then
-    # check if env with default name already exists:
-    if echo "$ENVS" | grep -q "$ENV_NAME"; then
-        echo "  Env '$ENV_NAME' already exists. Make sure it complies with $CLONE_PATH/mc4.yml."
-    else
-        echo "  Creating a dedicated conda env with default name: $ENV_NAME"
-        conda env create -f "$CLONE_PATH/mc4.yml"
-    fi
-    # set name for activation message:
-    env_name="$ENV_NAME"
+if [[ "$DO_CONDA" -eq 1 ]]; then
+  ENVS="$(conda env list)"
+  # check if env with default name already exists:
+  if echo "$ENVS" | grep -q "$ENV_NAME"; then
+      echo "  Env '$ENV_NAME' already exists. Make sure it complies with $CLONE_PATH/mc4.yml."
   else
-    # check if env with user-provided name already exists:
-    if echo "$ENVS" | grep -q "$env_name"; then
-        echo "  Env '$env_name' already exists. Make sure it complies with $CLONE_PATH/mc4.yml."
-    else
-        echo "  Creating a dedicated conda env with given name: $env_name"
-        conda env create -f "$CLONE_PATH/mc4.yml" -n "$env_name"
-    fi
+      echo "  Creating a dedicated conda env with default name: $ENV_NAME"
+      conda env create -f "$CLONE_PATH/mc4.yml"
   fi
 fi
 
-echo ""
 # export lines for the bin folders:
 export1="export PATH=\"$REPO_bin:\$PATH\""
 export2="export PATH=\"$SCRIPT_DIR:\$PATH\""
-
-# Detect OS and suggest appropriate RC file
-if [ "$(uname -s)" = "Darwin" ]; then
-    # On macOS, login shells for bash source .bash_profile. For zsh, it's .zprofile.
-    # We will check for .bash_profile as a common default and inform the user.
-    rc_file="$HOME/.bash_profile"
-    echo "On macOS, this script will check for '$rc_file'."
-    echo "If you use a different shell (e.g., zsh), you might need to manually edit '~/.zshrc' or '~/.zprofile'."
+echo ""
+echo "Checking PATH variables..."
+# Check if rc file needs updating:
+# Use grep -F to match fixed strings, which is safer and faster.
+if grep -qF "$export1" "$rc_file"; then
+  echo "  'MCCE4-Alpha/bin' already in PATH."
 else
-    # Assume Linux/other Unix-like, where .bashrc is common for interactive shells.
-    rc_file="$HOME/.bashrc"
+  echo "$export1" >> "$rc_file"
+fi
+if grep -qF "$export2" "$rc_file"; then
+  echo "  'MCCE4-Alpha/MCCE_bin' already in PATH."
+else
+  echo "$export2" >> "$rc_file"
 fi
 
-# Check if rc file exists
-no_rc_msg=""
-if [ ! -f "$rc_file" ];
-then
-  echo "RC file ($rc_file) not found."
-  # create a message for latter use:
-  no_rc_msg="Create the RC file with this command: ' cd ~; touch $rc_file '"
+# if file was not deleted:
+if [[ -f "install-unprivileged.sh" ]]; then
+  if grep -qF "$export0" "$rc_file"; then
+    echo "$export0" >> "$rc_file"
+  fi
+fi
+
+echo ""
+if [[ "$DO_CONDA" -eq 1 ]]; then
+  echo "Initializing conda..."
+  ~/miniconda3/bin/conda init bash
+  source "$rc_file"
+  cd $CLONE_PATH
   echo ""
-else
-  # Use grep -F to match fixed strings, which is safer and faster.
-  if grep -qF "$export1" "$rc_file";
-  then
-    echo "  'MCCE4-Alpha/bin' already in PATH."
-  fi
-  if grep -qF "$export2" "$rc_file";
-  then
-    echo "  'MCCE4-Alpha/MCCE_bin' already in PATH."
-  fi
+  echo "Now you can run these commands:"
+  echo "  conda activate $ENV_NAME"
+  echo "  which getpdb      # :: check tool is found via PATH"
+  echo "  getpdb -h         # :: check several python requirements"
+  echo ""
+  echo ""
 fi
 
-echo ""
-echo "Almost done!"
-echo ""
-if [ -n "$no_rc_msg" ]; then
-    echo "$no_rc_msg"
-    echo ""
-fi
-echo "1. Add these export path lines to your $rc_file (if not already there), then save the file:"
-echo ""
-echo " $export1"
-echo " $export2"
-echo ""
-echo "2. To effect the changes to your PATH variable, please start a new terminal session or run:"
-echo ""
-echo " source $rc_file"
-echo ""
-
-if [ "$DO_CONDA" -eq 0 ];
-then
-    echo "3. To complete this quick installation, activate a python 3.10 environment"
-    echo "that complies with requirement.txt."
-else
-    echo "3. To complete this quick installation, activate your environment:"
-    echo ""
-    echo "  conda activate $env_name"
-fi
-echo ""
-echo "4. Now you can run these commands:"
-echo ""
-echo "  which getpdb  # :: check tool is found via PATH"
-echo "  getpdb -h     # :: check several python requirements"
-echo ""
-echo ""
-echo "Thank you for giving MCCE4 a try!"
+echo "Thank you for giving $CLONE a try!"
 echo ""
 echo "Thank you for opening an issue if you encountered problems with the script:"
-echo "https://github.com/GunnerLab/MCCE4-Alpha/issues"
+echo "https://github.com/GunnerLab/$CLONE/issues"
 echo ""
