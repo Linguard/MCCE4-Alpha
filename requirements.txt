@@ -2,6 +2,7 @@
 numpy
 scipy
 pandas
+pygraphviz
 networkx
 matplotlib
 seaborn

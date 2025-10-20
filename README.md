@@ -4,28 +4,18 @@
   <img src="docs/images/mcce_logo1.png" alt="MCCE Logo" style="max-width: 100%; height: auto;">
 </p>
 
-## Welcome to the __MCCE4-Alpha__! 
-
+## Welcome to __MCCE4-Alpha__! 
 __🎬 Let's Get Started:__ 
 
-This tutorial walks you through calculating and analyzing __electrostatic interactions__ from a PDB structure.  
-You’ll find step-by-step practical examples designed to help new users quickly run simulations and understand key features of MCCE4.
-
-__🛠️ Install Now:__ [Installation](https://gunnerlab.github.io/mcce4_tutorial/docs/installation/) 
-#### TL;DR (Installation):
+#### Quick Installation:
   1. Clone this repo, then cd into it:
   ```
-   git clone https://github.com/GunnerLab/MCCE4-Alpha.git; cd MCCE4-Alpha
+   git clone https://github.com/GunnerLab/MCCE4-Alpha.git; cd MCCE4-Alpha;
   ```
   
-  2. Check if you have pre-requisites such as `conda` and `apptainer`. If not, a TODO list with instructions is displayed. Run:
+  2. Run the `quick_install.sh` script to download MCCE PBE solver (NGPB) image file and create a conda environment for MCCE4 (this may need several passes if you need to install dependencies such as miniconda and apptainer):
   ```
-   sh ./MCCE_bin/check_environment.sh
-  ```
-
-  3. If no "TODOs" to do, then run this script to download MCCE PBE solver (NGPB) image file and create a conda environment for MCCE4:
-  ```
-   sh ./MCCE_bin/quick_install.sh
+   bash ./MCCE_bin/quick_install.sh
   ``` 
 
 __🚀 Run Your First Job:__ [Quick Start](https://gunnerlab.github.io/mcce4_tutorial/docs/guide/quick_start/)  
