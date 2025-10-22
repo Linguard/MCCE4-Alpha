@@ -102,7 +102,7 @@ if [[ "$NO_APPTAINER" -eq 0 ]]; then
       curl -L -o "$sif_file" "$sif_url" || { echo "Failed to download NGPB image with curl"; exit 1; }
       #else # wget
       #  wget -O "$sif_file" "$sif_url" || { echo "Failed to download NGPB image with wget"; exit 1; }
-      fi
+      #fi
     fi
     echo "  Soft-linking the generic image as 'NextGenPB_MCCE4.sif'"
     ln -sf "$sif_file" "$sif_mc4"
