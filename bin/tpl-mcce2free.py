@@ -1,10 +1,14 @@
 #!/usr/bin/env python
-"""Convert mcce format tpl to free format."""
+"""Convert mcce format tpl to free format.
 
-# bug, single atom residue doesn't have CONNECT in mcce tpl, but should have a CONNECT record in free tpl
+BUG: single atom residue doesn't have CONNECT in mcce tpl, but should have a CONNECT record in free tpl
 
-import sys
+"""
+
 import argparse
+from pathlib import Path
+import sys
+
 
 class Paramfile:
     def __init__(self, fname):
@@ -122,7 +126,7 @@ class Paramfile:
 
         self.tplout += extralines
 
-        return()
+        return
 
     def atom_consistency(self, conf):
         passed = False
@@ -284,4 +288,7 @@ if __name__ == "__main__":
 
     filename = args.tpl[0]
     file_param = Paramfile(filename)
-    sys.stdout.writelines(file_param.tplout)
+    fpo = Path(filename).with_suffix(".ftpl")
+    with fpo.open("w") as fh:
+        fh.writelines(file_param.tplout)
+    print(f"Created {fpo!s}")
