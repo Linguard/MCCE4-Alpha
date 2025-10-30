@@ -9,10 +9,8 @@
 # CHANGELOG:
 _This section will reflect important changes and will provide you with information on how to apply them; For example, if new python packages are added to the environment file (mc4.yml), then the entry pertaining to that change will list the command(s) to update your environment._ 
 
- * 2025-10-30
-  - README:
-    - Added CHANGELOG
-    - Added link to sudo_install.txt
+* 2025-10-30:
+  - Updated README: Added CHANGELOG, link to sudo_install.txt
   - Added topologies for SO4 and PO4 in param/.
   - Updated bin/step3.py with longer timeout value
   - Updated MCCE_bin/quick_install.sh
@@ -20,7 +18,7 @@ _This section will reflect important changes and will provide you with informati
 
 ---
 
-# If you have sudo access or would like a system-wide insatallation of the needed softwares:
+# If you have sudo access or would like a system-wide installation of the needed softwares:
 The file `MCCE_bin/sudo_install.txt` has the necessary information for you or your sys admin to install the packages. To display the file, run this command:
 ```
  cat ./MCCE_bin/sudo_install.txt
