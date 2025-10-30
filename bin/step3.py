@@ -591,6 +591,8 @@ def pbe(iric):
     ic = iric[1]
     pid = current_process()  # Identify this worker
     confid = protein.residue[ir].conf[ic].confID
+    conf_serial = protein.residue[ir].conf[ic].serial
+    total_confs = protein.pbe_conformers
     resid = confid[:3] + confid[5:11]
     bound = def_boundary(ir, ic)
     rxn = 0.0
@@ -602,8 +604,8 @@ def pbe(iric):
             all_0 = False
             break
     if all_0:  # skip
-        logger.info("Skipping PBE solver for non-charge conformer %s..." % confid)
-        open(PROGRESS_LOG, "a").write("Skipping PBE solver for non-charge conformer %s...\n" % confid)
+        logger.info("Skipping PBE solver for non-charge conformer (%d/%d) %s..." % (conf_serial, total_confs, confid))
+        open(PROGRESS_LOG, "a").write("Skipping PBE solver for non-charge conformer (%d/%d) %s...\n" % (conf_serial, total_confs, confid))
     else:
         # switch to temporary unique directory
         cwd = Path.cwd()
@@ -617,9 +619,9 @@ def pbe(iric):
             # decide which pb solver, delphi = delphi legacy
             if run_options.s.upper() == "DELPHI":
                 logger.info(
-                    "%s: Calling delphi to calculate conformer %s in %s" % (pid.name, confid, tmp_pbe)
+                    "%s: Calling delphi to calculate conformer (%d/%d) %s in %s" % (pid.name, conf_serial, total_confs, confid, tmp_pbe)
                 )
-                open(cwd.joinpath(PROGRESS_LOG), "a").write("%s: Calling delphi to calculate conformer %s in %s\n" % (pid.name, confid, tmp_pbe))
+                open(cwd.joinpath(PROGRESS_LOG), "a").write("%s: Calling delphi to calculate conformer (%d/%d) %s in %s\n" % (pid.name, conf_serial, total_confs, confid, tmp_pbe))
                 pbs_delphi = PBS_DELPHI()
                 try:
                     rxn0, rxn = pbs_delphi.run(bound, run_options)
@@ -629,9 +631,9 @@ def pbe(iric):
 
             elif run_options.s.upper() == "ML":
                 logger.info(
-                    "%s: Calling ML/GB to calculate conformer %s" % (pid.name, confid)
+                    "%s: Calling ML/GB to calculate conformer (%d/%d) %s" % (pid.name, conf_serial, total_confs, confid)
                 )
-                open(cwd.joinpath(PROGRESS_LOG), "a").write("%s: Calling ML to calculate conformer %s\n" % (pid.name, confid))
+                open(cwd.joinpath(PROGRESS_LOG), "a").write("%s: Calling ML to calculate conformer (%d/%d) %s\n" % (pid.name, conf_serial, total_confs, confid))
                 pbs_ml = PBS_ML()
                 try:
                     rxn0, rxn = pbs_ml.run(bound, run_options)
@@ -641,9 +643,9 @@ def pbe(iric):
 
             elif run_options.s.upper() == "NGPB":
                 logger.info(
-                    "%s: Calling ngpb to calculate conformer %s in %s" % (pid.name, confid, tmp_pbe)
+                    "%s: Calling ngpb to calculate conformer (%d/%d) %s in %s" % (pid.name, conf_serial, total_confs, confid, tmp_pbe)
                 )
-                open(cwd.joinpath(PROGRESS_LOG), "a").write("%s: Calling ngpb to calculate conformer %s in %s\n" % (pid.name, confid, tmp_pbe))
+                open(cwd.joinpath(PROGRESS_LOG), "a").write("%s: Calling ngpb to calculate conformer (%d/%d) %s in %s\n" % (pid.name, conf_serial, total_confs, confid, tmp_pbe))
                 pbs_ngpb = PBS_NGPB(instance_name)
                 try:
                     rxn0, rxn = pbs_ngpb.run(bound, run_options)
@@ -653,9 +655,9 @@ def pbe(iric):
                 
             elif run_options.s.upper() == "ZAP":
                 logger.info(
-                    "%s: Calling zap to calculate conformer %s in %s" % (pid.name, confid, tmp_pbe)
+                    "%s: Calling zap to calculate conformer (%d/%d) %s in %s" % (pid.name, conf_serial, total_confs, confid, tmp_pbe)
                 )
-                open(cwd.joinpath(PROGRESS_LOG), "a").write("%s: Calling zap to calculate conformer %s in %s\n" % (pid.name, confid, tmp_pbe))
+                open(cwd.joinpath(PROGRESS_LOG), "a").write("%s: Calling zap to calculate conformer (%d/%d) %s in %s\n" % (pid.name, conf_serial, total_confs, confid, tmp_pbe))
                 pbs_zap = PBS_ZAP()
                 try:
                     rxn0, rxn = pbs_zap.run(bound, run_options)
@@ -666,9 +668,9 @@ def pbe(iric):
 
             elif run_options.s.upper() == "APBS":
                 logger.info(
-                    "%s: Calling APBS to calculate conformer %s in %s" % (pid.name, confid, tmp_pbe)
+                    "%s: Calling APBS to calculate conformer (%d/%d) %s in %s" % (pid.name, conf_serial, total_confs, confid, tmp_pbe)
                 )
-                open(cwd.joinpath(PROGRESS_LOG), "a").write("%s: Calling APBS to calculate conformer %s in %s\n" % (pid.name, confid, tmp_pbe))
+                open(cwd.joinpath(PROGRESS_LOG), "a").write("%s: Calling APBS to calculate conformer (%d/%d) %s in %s\n" % (pid.name, conf_serial, total_confs, confid, tmp_pbe))
                 pbs_apbs = PBS_APBS()
                 try:
                     rxn0, rxn = pbs_apbs.run(bound, run_options)
@@ -678,9 +680,9 @@ def pbe(iric):
 
             elif run_options.s.upper() == "TEMPLATE":
                 logger.info(
-                    "%s: Calling template to calculate conformer %s in %s" % (pid.name, confid, tmp_pbe)
+                    "%s: Calling template to calculate conformer (%d/%d) %s in %s" % (pid.name, conf_serial, total_confs, confid, tmp_pbe)
                 )
-                open(cwd.joinpath(PROGRESS_LOG), "a").write("%s: Calling template to calculate conformer %s in %s\n" % (pid.name, confid, tmp_pbe))
+                open(cwd.joinpath(PROGRESS_LOG), "a").write("%s: Calling template to calculate conformer (%d/%d) %s in %s\n" % (pid.name, conf_serial, total_confs, confid, tmp_pbe))
                 pbs_template = PBS_TEMPLATE()
                 try:
                     rxn0, rxn = pbs_template.run(bound, run_options)
@@ -1474,6 +1476,14 @@ if __name__ == "__main__":
         #   make conformer list with their corresponding ir and ic.
         #   This list of (ir, ic) will be passed as an array to the multiprocess module as work load.
 
+        # Serialize conformer index
+        serial_counter = 1
+        for ir in range(len(protein.residue)):
+            if len(protein.residue[ir].conf) > 1:  # skip dummy or backbone only residue
+                for ic in range(1, len(protein.residue[ir].conf)):
+                    protein.residue[ir].conf[ic].serial = serial_counter
+                    serial_counter += 1
+
         work_load = []
         counter = 1
         for ir in range(len(protein.residue)):
@@ -1482,6 +1492,7 @@ if __name__ == "__main__":
                     if run_options.end >= counter >= run_options.start:
                         work_load.append((ir, ic))
                     counter += 1
+        protein.pbe_conformers = counter - 1
 
         logger.debug("  work_load as (ir ic) list [%s]" % ",".join(map(str, work_load)))
         logger.info("   Time needed: %d seconds.", time.time() - start_t)
@@ -1497,7 +1508,7 @@ if __name__ == "__main__":
 
             for i, r in enumerate(async_results):
                 try:
-                    res = r.get(timeout=30)  # 30 seconds timeout per task
+                    res = r.get(timeout=300)  # 300 seconds timeout per task, test if this solves premature termination
                 except TimeoutError:
                     logger.error(f"Task {i} timed out")
                     results.append("[ERROR] Task timed out")
