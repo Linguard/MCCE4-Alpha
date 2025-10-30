@@ -1,0 +1,124 @@
+# Topology file for Phosphate: po4.ftpl
+# Source: Giray Enkavi of Emad Tajkhorshid's lab (emad@life.uiuc.edu), 
+#        except H3PO4, PO4(3-) (derived).
+# Created on 2025-10-22 by Cat Chenal from 2012 po4.tpl
+#
+# Species:
+# -3: PO4-3  : phosphate or orthophosphate ion
+# -2: HPO4-2 : hydrogen phosphate
+# -1: H2PO4-1: dihydrogen phosphate
+# 01: H3PO4  : phosphoric acid
+#
+# pKa0       : CRC Handbook of Chemistry and Physics, 84th Edition (2004).
+#.............................................................................
+#
+# Values of the same key are appended and separated by ","
+CONFLIST, PO4: PO4BK, PO401, PO4-1, PO4-2, PO4-3, PO4DM
+
+# Atom definition
+CONNECT, " P  ", PO401: sp3, " O1 ", " O2 ", " O3 ", " O4 "
+CONNECT, " O1 ", PO401: sp3, " P  ", " HO1"
+CONNECT, " HO1", PO401: s, " O1 "
+CONNECT, " O2 ", PO401: sp3, " P  ", " HO2"
+CONNECT, " HO2", PO401: s, " O2 "
+CONNECT, " O3 ", PO401: sp3, " P  ", " HO3"
+CONNECT, " HO3", PO401: s, " O3 "
+CONNECT, " O4 ", PO401: sp2, " P  "
+
+CONNECT, " P  ", PO4-1: sp3, " O1 ", " O2 ", " O3 ", " O4 "
+CONNECT, " O1 ", PO4-1: sp3, " P  ", " HO1"
+CONNECT, " HO1", PO4-1: s, " O1 "
+CONNECT, " O2 ", PO4-1: sp3, " P  ", " HO2"
+CONNECT, " HO2", PO4-1: s, " O2 "
+CONNECT, " O3 ", PO4-1: sp3, " P  "
+CONNECT, " O4 ", PO4-1: sp2, " P  "
+
+CONNECT, " P  ", PO4-2: sp3, " O1 ", " O2 ", " O3 ", " O4 "
+CONNECT, " O1 ", PO4-2: sp3, " P  ", " HO1"
+CONNECT, " HO1", PO4-2: s, " O1 "
+CONNECT, " O2 ", PO4-2: sp3, " P  "
+CONNECT, " O3 ", PO4-2: sp3, " P  "
+CONNECT, " O4 ", PO4-2: sp2, " P  "
+
+CONNECT, " P  ", PO4-3: sp3, " O1 ", " O2 ", " O3 ", " O4 "
+CONNECT, " O1 ", PO4-3: sp3, " P  "
+CONNECT, " O2 ", PO4-3: sp3, " P  "
+CONNECT, " O3 ", PO4-3: sp3, " P  "
+CONNECT, " O4 ", PO4-3: sp2, " P  "
+
+# Atom charges
+CHARGE, PO401, " P  ":  1.920
+CHARGE, PO401, " O1 ": -0.680
+CHARGE, PO401, " HO1":  0.340
+CHARGE, PO401, " O2 ": -0.680
+CHARGE, PO401, " HO2":  0.340
+CHARGE, PO401, " O3 ": -0.680
+CHARGE, PO401, " HO3":  0.340
+CHARGE, PO401, " O4 ": -0.900
+
+CHARGE, PO4-1, " P  ":  1.480
+CHARGE, PO4-1, " O1 ": -0.680
+CHARGE, PO4-1, " HO1":  0.340
+CHARGE, PO4-1, " O2 ": -0.680
+CHARGE, PO4-1, " HO2":  0.340
+CHARGE, PO4-1, " O3 ": -0.900
+CHARGE, PO4-1, " O4 ": -0.900
+
+CHARGE, PO4-2, " P  ":  1.040
+CHARGE, PO4-2, " O1 ": -0.680
+CHARGE, PO4-2, " HO1":  0.340
+CHARGE, PO4-2, " O2 ": -0.900
+CHARGE, PO4-2, " O3 ": -0.900
+CHARGE, PO4-2, " O4 ": -0.900
+
+CHARGE, PO4-3, " P  ":  0.600
+CHARGE, PO4-3, " O1 ": -0.900
+CHARGE, PO4-3, " O2 ": -0.900
+CHARGE, PO4-3, " O3 ": -0.900
+CHARGE, PO4-3, " O4 ": -0.900
+
+# Atom radius, dielectric boundary radius, VDW radius, and energy well depth
+RADIUS,  PO401,  " P  ": 0.000,   2.000,   0.173
+RADIUS,  PO401,  " O1 ": 0.000,   1.600,   0.200
+RADIUS,  PO401,  " HO1": 0.000,   1.000,   0.020
+RADIUS,  PO401,  " O2 ": 0.000,   1.600,   0.200
+RADIUS,  PO401,  " HO2": 0.000,   1.000,   0.020
+RADIUS,  PO401,  " O3 ": 0.000,   1.600,   0.200
+RADIUS,  PO401,  " HO3": 0.000,   1.000,   0.020
+RADIUS,  PO401,  " O4 ": 0.000,   1.600,   0.200
+
+RADIUS,  PO4-1,  " P  ": 0.000,   2.000,   0.173
+RADIUS,  PO4-1,  " O1 ": 0.000,   1.600,   0.200
+RADIUS,  PO4-1,  " HO1": 0.000,   1.000,   0.020
+RADIUS,  PO4-1,  " O2 ": 0.000,   1.600,   0.200
+RADIUS,  PO4-1,  " HO2": 0.000,   1.000,   0.020
+RADIUS,  PO4-1,  " O3 ": 0.000,   1.600,   0.200
+RADIUS,  PO4-1,  " O4 ": 0.000,   1.600,   0.200
+
+RADIUS,  PO4-2,  " P  ": 0.000,   2.000,   0.173
+RADIUS,  PO4-2,  " O1 ": 0.000,   1.600,   0.200
+RADIUS,  PO4-2,  " HO1": 0.000,   1.000,   0.020
+RADIUS,  PO4-2,  " O2 ": 0.000,   1.600,   0.200
+RADIUS,  PO4-2,  " O3 ": 0.000,   1.600,   0.200
+RADIUS,  PO4-2,  " O4 ": 0.000,   1.600,   0.200
+
+RADIUS,  PO4-3,  " P  ": 0.000,   2.000,   0.173
+RADIUS,  PO4-3,  " O1 ": 0.000,   1.600,   0.200
+RADIUS,  PO4-3,  " O2 ": 0.000,   1.600,   0.200
+RADIUS,  PO4-3,  " O3 ": 0.000,   1.600,   0.200
+RADIUS,  PO4-3,  " O4 ": 0.000,   1.600,   0.200
+
+# Conformer parameters that appear in head3.lst: Em0, pKa0, ne, nH, rxn02, 04, 08
+CONFORMER, PO401: Em0=   0.0, pKa0=  0.00, ne= 0, nH= 0, rxn02=  0.0, rxn04=  -20.534, rxn08=  -9.470
+CONFORMER, PO4-1: Em0=   0.0, pKa0=  2.16, ne= 0, nH=-1, rxn02=  0.0, rxn04=  -37.088, rxn08= -17.359
+CONFORMER, PO4-2: Em0=   0.0, pKa0=  7.21, ne= 0, nH=-2, rxn02=  0.0, rxn04=  -90.858, rxn08= -42.941
+CONFORMER, PO4-3: Em0=   0.0, pKa0= 12.32, ne= 0, nH=-3, rxn02=  0.0, rxn04= -184.891, rxn08= -87.542
+CONFORMER, PO4DM: Em0=   0.0, pKa0=  0.00, ne= 0, nH= 0, rxn02=  0.000, rxn04=    0.000, rxn08=  0.000
+
+# Rotatable bonds. The atoms extended in the bond direction will all be rotated.
+TORSION, PO401,  HO1:  O1   P    O2   f        0.0         3      0.00
+TORSION, PO401,  HO2:  O2   P    O1   f        0.0         3      0.00
+TORSION, PO401,  HO3:  O3   P    O1   f        0.0         3      0.00
+TORSION, PO4-1,  HO1:  O1   P    O2   f        0.0         3      0.00
+TORSION, PO4-1,  HO2:  O2   P    O1   f        0.0         3      0.00
+TORSION, PO4-2,  HO1:  O1   P    O2   f        0.0         3      0.00
