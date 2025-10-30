@@ -1,0 +1,12 @@
+# Commands to install required software at system level with sudo access:
+
+# To install apptainer, see:
+#   https://apptainer.org/docs/admin/main/installation.html#installation-on-linux
+#
+# Other software:
+#
+ sudo apt update
+ 
+ sudo apt install curl
+ sudo apt-get install rpm2cpio
+ sudo apt-get install cpio
