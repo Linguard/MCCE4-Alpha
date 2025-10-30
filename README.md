@@ -4,11 +4,47 @@
   <img src="docs/images/mcce_logo1.png" alt="MCCE Logo" style="max-width: 100%; height: auto;">
 </p>
 
-## Welcome to __MCCE4-Alpha__! 
-__🎬 Let's Get Started:__ 
+## Welcome to __MCCE4-Alpha__!  
+
+# CHANGELOG:
+_This section will reflect important changes and will provide you with information on how to apply them; For example, if new python packages are added to the environment file (mc4.yml), then the entry pertaining to that change will list the command(s) to update your environment._ 
+
+ * 2025-10-30
+  - README:
+    - Added CHANGELOG
+    - Added link to sudo_install.txt
+  - Added topologies for SO4 and PO4 in param/.
+  - Updated bin/step3.py with longer timeout value
+  - Updated MCCE_bin/quick_install.sh
+  - __Apply changes with `git pull`__
+
+---
+
+# If you have sudo access or would like a system-wide insatallation of the needed softwares:
+The file `MCCE_bin/sudo_install.txt` has the necessary information for you or your sys admin to install the packages. To display the file, run this command:
+```
+ cat ./MCCE_bin/sudo_install.txt
+```
+
+# "Quick Install" script `MCCE_bin/quick_install.sh`:
+__Note: The quick install script will not modify an existing conda environment named 'mc4'.__ 
+If you want to re-create it, run this command before running the script:
+```
+ conda env remove -n mc4
+```
+
+### What this script does:
+  - Checks for required `conda`; Stops if not found so you can install it (commands provided).
+  - Create a conda environment for MCCE4 named 'mc4' (using 'mc4.yml').
+  - Checks for required `apptainer`; If a system Apptainer installation is not found & an 'unprivilege' version cannot be installed, Apptainer is conda-installed in 'mc4'.
+  - Downloads the generic image for NGPB in MCCE4/bin.
+  - Adds export commands to the PATH variable in ~/.bashrc for:
+    * 'MCCE4/bin' and 'MCCE4/MCCE4_bin'
+    * the unprivilege version of Apptainer if installed by the script
+ - Script code: [quick_install.sh](./MCCE_bin/quick_install.sh)
 
 #### Quick Installation:
-  1. Clone this repo, then cd into it:
+  1. Clone this repo, then cd into it with this command:
   ```
    git clone https://github.com/GunnerLab/MCCE4-Alpha.git; cd MCCE4-Alpha;
   ```

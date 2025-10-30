@@ -1,9 +1,3 @@
-# Choose command to run to create the environment:
-# 1. To use the default environm ent name of 'mc4':
-#   conda env create -f mc4.yml
-# 2. If you want 'new_env' to be the environment name instead of 'mc4':
-#   conda env create -f mc4.yml -n new_env
-# 
 name: mc4
 channels:
   - conda-forge
