@@ -6,17 +6,7 @@
 
 ## Welcome to __MCCE4-Alpha__!  
 
-# CHANGELOG:
-_This section will reflect important changes and will provide you with information on how to apply them; For example, if new python packages are added to the environment file (mc4.yml), then the entry pertaining to that change will list the command(s) to update your environment._ 
-
-* 2025-10-30:
-  - Updated README: Added CHANGELOG, link to sudo_install.txt
-  - Added topologies for SO4 and PO4 in param/.
-  - Updated bin/step3.py with longer timeout value
-  - Updated MCCE_bin/quick_install.sh
-  - __Apply changes with `git pull`__
-
----
+#### See our CHANGELOG at the bottom for the latest updates!
 
 # If you have sudo access or would like a system-wide installation of the needed softwares:
 The file `MCCE_bin/sudo_install.txt` has the necessary information for you or your sys admin to install the packages. To display the file, run this command:
@@ -78,6 +68,19 @@ Comprehensive documentation covering:
 - Installation
 - Guide: Detailed explanations of all settings
 - Example Projects 
+---
+
+# CHANGELOG:
+_This section will reflect important changes and will provide you with information on how to apply them; For example, if new python packages are added to the environment file (mc4.yml), then the entry pertaining to that change will list the command(s) to update your environment._ 
+
+* 2025-10-30:
+  - Updated README: Added CHANGELOG, link to sudo_install.txt
+  - Added topologies for SO4 and PO4 in param/.
+  - Updated bin/step3.py with longer timeout value
+  - Updated MCCE_bin/quick_install.sh
+  - __Apply changes with `git pull`__
+
+---
 
 ## Help us improve MCCE4
 This is a testing version of MCCE4 development. 
