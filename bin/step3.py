@@ -1512,6 +1512,8 @@ if __name__ == "__main__":
                 except TimeoutError:
                     logger.error(f"Task {i} timed out")
                     results.append("[ERROR] Task timed out")
+                    pool.terminate()   # stop all workers immediately
+                    exit()              # exit to stop program
                 except Exception as e:
                     logger.error(f"Task {i} failed with error: {e}")
                     results.append("[ERROR] Task failed")

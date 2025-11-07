@@ -10,6 +10,7 @@ PB Solver Interface Module
 
 import logging
 import math
+import time
 import numpy as np
 import os
 from pathlib import Path
@@ -159,6 +160,7 @@ class PBS_DELPHI:
         self.salt = 0.15
         self.grids_delphi = 65
         self.KCAL2KT = 1.688
+        time.sleep(2)
         return
     
     def depth(self, bound):
@@ -629,7 +631,7 @@ class PBS_NGPB:
     def collect_phi(self, xyzrcp):
         """Collect results from the log"""
         try:
-            with open("phi_on_atoms.txt") as fh:
+            with open("phi_on_atoms_0.txt") as fh:
                 lines = fh.readlines()
         except OSError:
             logger.critical("Could not open NGPB output file phi_on_atoms_0.txt.")
