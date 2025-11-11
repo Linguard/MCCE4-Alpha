@@ -631,10 +631,10 @@ class PBS_NGPB:
     def collect_phi(self, xyzrcp):
         """Collect results from the log"""
         try:
-            with open("phi_on_atoms_0.txt") as fh:
+            with open("phi_on_atoms.txt") as fh:
                 lines = fh.readlines()
         except OSError:
-            logger.critical("Could not open NGPB output file phi_on_atoms_0.txt.")
+            logger.critical("Could not open NGPB output file phi_on_atoms.txt.")
             sys.exit(1)
 
         for counter in range(len(xyzrcp)):
