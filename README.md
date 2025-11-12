@@ -71,14 +71,21 @@ Comprehensive documentation covering:
 ---
 
 # CHANGELOG:
+<!--- NOTE TO EDITOR: Use tis line to indicate that the uses rmust/should update their clone"
+  - __Apply changes: cd to your clone, then run `git pull`__
+-->
 _This section will reflect important changes and will provide you with information on how to apply them; For example, if new python packages are added to the environment file (mc4.yml), then the entry pertaining to that change will list the command(s) to update your environment._ 
+
+* 2025-11-11:
+  - Fixed deleterious typo in bin/pdbs_interfaces.py
+  - __Apply changes: cd to your clone, then run `git pull`__
 
 * 2025-10-30:
   - Updated README: Added CHANGELOG, link to sudo_install.txt
   - Added topologies for SO4 and PO4 in param/.
   - Updated bin/step3.py with longer timeout value
   - Updated MCCE_bin/quick_install.sh
-  - __Apply changes with `git pull`__
+  - __Apply changes: cd to your clone, then run `git pull`__
 
 ---
 
