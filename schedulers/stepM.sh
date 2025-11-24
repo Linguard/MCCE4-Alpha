@@ -42,10 +42,10 @@
 #-----------------------------------------------------------------------------
 # Input and Output:
 # A 3-column file with PDBID, protein chain IDs of interest (PROT), and protein chain IDs of interest of membrane generation (PROT_MEM)
-master_chains="<path_to_master_chains.txt>"                                    # Replace with actual file path   
+master_chains="/path/to/master_chains.txt"                                    # Replace with actual file path   
 
 # Set MCCE4 Parameters
-MCCE_HOME="/home/granepura/MCCE4"
+MCCE_HOME="/path/to/MCCE4"
 USER_PARAM="./user_param"
 EXTRA="./user_param/extra.tpl"
 

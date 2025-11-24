@@ -1,8 +1,90 @@
 #!/bin/bash
+
+# Parameter/Options for SLURM (Simple Linux Utility for Resource Management)
 #SBATCH --job-name=mcce4_run
+#SBATCH --output=submit_mcce4.log
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --mem=12G                 # Adjust memory if needed
+
+#=============================================================================
+#-----------------------------------------------------------------------------
+# Input and Output:
+input_pdb="prot.pdb"    # (INPDB)
+
+# Set MCCE4 Parameters
+MCCE_HOME="/path/to/MCCE4"
+USER_PARAM="./user_param"
+EXTRA="./user_param/extra.tpl"
+TMP="/tmp"
+CPUS=1
+
+# Step control flags
+step1="t"               # STEP1: pre-run, pdb-> mcce pdb  (DO_PREMCCE)
+step2="t"               # STEP2: make rotamers            (DO_ROTAMERS)
+step3="t"               # STEP3: Energy calculations      (DO_ENERGY)
+step4="t"               # STEP4: Monte Carlo Sampling     (DO_MONTE)
+step_clean="t"          # Clean PBE data                  (BACKUP CLEAN) : Set to f if step3 --debug option is used
+
+# Optional step controls
+center="f"              # Center protein structure before MCCE run      : Set to f to skip centering and use input PDB as-is
+stepM="f"               # Generate Partial Membranes                    : If true, user MUST satisfy condidtions of stepM.sh, which can be be obtained on MCCE4/inhouse/stepM.sh
+stepA="f"               # Run a custom script between step1 and step2   : If true, user MUST satisfy condidtions of their custom script
+stepB="f"               # Run a custom script between step2 and step3   : If true, user MUST satisfy condidtions of their custom script
+stepC="f"               # Run a custom script between step3 and step4   : If true, user MUST satisfy condidtions of their custom script
+
+# MCCE Simulation
+STEP1="step1.py -d 4 --dry"
+STEP2="step2.py -d 4 -l 1"
+STEP3="step3.py -d 4 -s delphi -p $CPUS -t \$TMP"
+STEP4="step4.py --xts -i 7 -n 1"
+
+# Optional MCCE script locations
+STEPM="/path/to/stepM.sh"         # Optional StepM: Bash script
+STEPA="/path/to/stepA_script.py"  # Optional StepA: Python script to run between step1 and step2.
+STEPB="/path/to/stepB_script.py"  # Optional StepB: Python script to run between step2 and step3.
+STEPC="/path/to/stepC_script.py"  # Optional StepC: Python script to run between step3 and step4.
+
+# NOTE: User is responsible to precheck if custom scripts work properly and efficiently
+# NO USER INPUT NECCESARY BELOW THIS LINE
+#------------------------------------------------------------------------------
+#==============================================================================
+
+# Check MCCE_HOME exists before PATH export
+if [[ ! -d "$MCCE_HOME/bin" ]]; then
+    echo -e "\033[0;31m[ERROR]\033[0m MCCE_HOME is not set correctly or $MCCE_HOME/bin does not exist."
+    echo "Please check your MCCE_HOME path in submit_mcce4.sh."
+    exit 1
+fi
+
+# Export environment for downstream script
+export input_pdb MCCE_HOME USER_PARAM EXTRA TMP
+export step1 step2 step3 step4 step_clean
+export center stepM stepA stepB stepC
+export STEP1 STEP2 STEP3 STEP4
+export STEPM STEPA STEPB STEPC
+
+# Define MCCE_HOME binary directory as mc_bin if MCCE_HOME is set
+if [[ -n "$MCCE_HOME" ]]; then
+    mc_bin="$MCCE_HOME/bin"
+    echo "mc_bin defined as: $mc_bin"
+else
+    echo "Error: MCCE_HOME is not set."
+    exit 1
+fi
+
+# Remove any existing instance of mc_bin from PATH and prepend mc_bin to PATH
+PATH=$(echo "$PATH" | tr ':' '\n' | grep -vx "$mc_bin" | paste -sd ':' -)
+export PATH="$mc_bin:$PATH"
+
+# Print useful info
+echo -e "MCCE_HOME:        $MCCE_HOME"
+echo -e "MCCE_HOME_bin:    $mc_bin"
+echo -e "PATH:             $PATH"
+echo -e "Driver:           $mc_bin/driver_mcce4.sh"
+
+# Inititiate MCCE_HOME PATH and call driver_mcce4.sh
+$mc_bin/driver_mcce4.sh
 
 # ==============================================================================
 # Script Name   : submit_mcce4.sh
@@ -48,63 +130,4 @@
 # Date Created  : July 2025
 # ==============================================================================
 
-#=============================================================================
-#-----------------------------------------------------------------------------
-# Input and Output:
-input_pdb="prot.pdb"    # (INPDB)
-
-# Set MCCE4 Parameters
-MCCE_HOME="/path/to/MCCE4-Alpha"
-USER_PARAM="./user_param"
-EXTRA="./user_param/extra.tpl"
-TMP="/tmp"
-CPUS=1
-
-# Step control flags
-step1="t"               # STEP1: pre-run, pdb-> mcce pdb  (DO_PREMCCE)
-step2="t"               # STEP2: make rotamers            (DO_ROTAMERS)
-step3="t"               # STEP3: Energy calculations      (DO_ENERGY)
-step4="t"               # STEP4: Monte Carlo Sampling     (DO_MONTE)
-step_clean="t"          # Clean PBE data                  (BACKUP CLEAN) : Set to f if step3 --debug option is used
-
-# Optional step controls
-stepM="f"               # Generate Partial Membranes                    : If true, user MUST satisfy condidtions of stepM.sh, which can be be obtained on MCCE4/inhouse/stepM.sh
-stepA="f"               # Run a custom script between step1 and step2   : If true, user MUST satisfy condidtions of their custom script
-stepB="f"               # Run a custom script between step2 and step3   : If true, user MUST satisfy condidtions of their custom script
-stepC="f"               # Run a custom script between step3 and step4   : If true, user MUST satisfy condidtions of their custom script
-
-# MCCE Simulation
-STEP1="step1.py -d 4 --dry"
-STEP2="step2.py -d 4 -l 1"
-STEP3="step3.py -d 4 -s delphi -p $CPUS -t \$TMP"
-STEP4="step4.py --xts -i 7 -n 1"
-
-# Optional MCCE script locations
-STEPM="/path/to/stepM.sh"         # Optional StepM: Bash script
-STEPA="/path/to/stepA_script.py"  # Optional StepA: Python script to run between step1 and step2.
-STEPB="/path/to/stepB_script.py"  # Optional StepB: Python script to run between step2 and step3.
-STEPC="/path/to/stepC_script.py"  # Optional StepC: Python script to run between step3 and step4.
-
-# NOTE: User is responsible to precheck if custom scripts work properly and efficiently
-# NO USER INPUT NECCESARY BELOW THIS LINE
-#------------------------------------------------------------------------------
-#==============================================================================
-
-# Check MCCE_HOME exists before PATH export
-if [[ ! -d "$MCCE_HOME/bin" ]]; then
-    echo -e "\033[0;31m[ERROR]\033[0m MCCE_HOME is not set correctly or $MCCE_HOME/bin does not exist."
-    echo "Please check your MCCE_HOME path in submit_mcce4.sh."
-    exit 1
-fi
-
-# Export environment for downstream script
-export input_pdb MCCE_HOME USER_PARAM EXTRA TMP
-export step1 step2 step3 step4 step_clean
-export stepM stepA stepB stepC
-export STEP1 STEP2 STEP3 STEP4
-export STEPM STEPA STEPB STEPC
-
-# Inititiate MCCE_HOME PATH and call driver_mcce4.sh
-export PATH="$MCCE_HOME/bin:$PATH"  # Add MCCE_HOME/bin to PATH for mcce step executables
-driver_mcce4.sh
 
