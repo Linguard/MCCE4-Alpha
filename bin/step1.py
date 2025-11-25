@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
 Module: step1.py
 
@@ -34,20 +33,22 @@ Usage examples:
 4. Run step 1 with other customized parameters
     step1.py prot.pdb -u HOME_MCCE=/path/to/mcce_home,H2O_SASCUTOFF=0.05
 """
-
 import argparse
+from collections import defaultdict
 import math
 import os
 from pathlib import Path
+import re
+import shutil
 import subprocess
 import sys
-import re
-from collections import defaultdict, Counter
+
 from mccesteps import export_runprm
 from mccesteps import record_runprm
 from mccesteps import detect_runprm
 from mccesteps import restore_runprm
 from conserve_het import label_het
+
 
 # ligands and renaming rules.
 Possible_ligands = {"HIS": "HIL", "MET": "MEL", "CYS": "CYL"}
@@ -80,7 +81,6 @@ class Atom:
         self.icode = line[26]
         self.xyz = (float(line[30:38]), float(line[38:46]), float(line[46:54]))
         self.resid = (self.resname, self.chainid, self.seqnum, self.icode)
-
         if len(self.name.strip()) < 4:
             self.element = self.name[:2]
         else:
@@ -182,7 +182,11 @@ def group_residues(lines):
     atoms = []
     for line in lines:
         atom = Atom()
-        atom.loadline(line)
+        try:
+            atom.loadline(line)
+        except ValueError as e:
+            sys.exit(f"Could not convert some fields from line: {line!s}; Error: {e}")
+            
         atoms.append(atom)
 
     resids = []
@@ -210,6 +214,8 @@ def rename_ligand(res):
     for atom in res.atoms:
         if atom.resname in Possible_ligands:
             atom.resname = Possible_ligands[atom.resname]
+
+    return
 
 
 def identify_ligands(lines):
@@ -297,6 +303,7 @@ def write_runprm(args):
 
     return
 
+
 def insert_termini_warning(text: str) -> str:
     """Insert a warning when multiple termini were labelled, which
     happens when a chain has breaks and termini labelling is turned on.
@@ -322,11 +329,11 @@ def insert_termini_warning(text: str) -> str:
 
 
 def filter_and_condense_missing_atoms(log_text):
-    # This function takes all the "Missing Heavy Atom" messages
-    # generated in the C code, removes the messages associated 
-    # with NTR or CTR. If multiple atoms are removed from a 
-    # conformer, they are reformatted to be on one line.
-
+    """This function takes all the "Missing Heavy Atom" messages
+    generated in the C code, removes the messages associated with
+    NTR or CTR. If multiple atoms are removed from a conformer,
+    they are reformatted to be on one line.
+    """
     # Collect cleaned entries
     cleaned_lines = []
     missing_atoms = defaultdict(list)
@@ -336,13 +343,11 @@ def filter_and_condense_missing_atoms(log_text):
         r'(Missing heavy atom\s+(\S+)\s+of conf\s+(\S+)\s+in "([^"]+)")'
     )
 
-    # Store lines to remove
     lines_to_remove = set()
 
     for match in pattern.finditer(log_text):
         full_line, atom, conf, residue = match.groups()
-
-        # Flag line for removal
+        # Save line for removal
         lines_to_remove.add(full_line)
 
         # Skip unwanted conformers
@@ -376,6 +381,42 @@ def filter_and_condense_missing_atoms(log_text):
         final_text = new_log_text + "\n" + "\n".join(cleaned_lines)
 
     return final_text
+
+
+def trim_pdb_after_endmdl(file_path: str):
+    """
+    Trims a PDB file in place after the first ENDMDL, 
+    but only if there is at least one MODEL following that ENDMDL.
+    Makes a backup copy of the original file with '_untrimmed' in its name.
+    
+    Parameters:
+        file_path (str): Path to the input PDB file (will be modified).
+    """
+    file_path = Path(file_path)
+    with open(file_path, "r") as f:
+        lines = f.readlines()
+
+    try:
+        # Find first ENDMDL
+        endmdl_index = next(i for i, line in enumerate(lines) if line.strip().startswith("ENDMDL"))
+    except StopIteration:
+        # No ENDMDL at all → do nothing
+        return
+    
+    # Check if MODEL exists after ENDMDL
+    if not any("MODEL" in line for line in lines[endmdl_index+1:]):
+        return  # leave file unchanged
+
+    # Make a backup copy
+    shutil.copy(file_path, file_path.with_name(f"{file_path.stem}_untrimmed.pdb"))
+
+    # Write trimmed file (same name as original)
+    with open(file_path, "w") as f:
+        f.writelines(lines[:endmdl_index+1])
+        f.write("END\n")
+
+    return
+
 
 if __name__ == "__main__":
 
@@ -432,6 +473,7 @@ if __name__ == "__main__":
     write_runprm(args)
 
     if not args.norun:
+        trim_pdb_after_endmdl(args.prot[0])
         new_pdblines = fix_format(args.prot[0])
         print("Preprocessing input pdb file, identifying ligands ...")
         new_pdblines = identify_ligands(new_pdblines)
