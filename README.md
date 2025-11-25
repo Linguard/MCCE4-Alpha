@@ -76,6 +76,11 @@ Comprehensive documentation covering:
 -->
 _This section will reflect important changes and will provide you with information on how to apply them; For example, if new python packages are added to the environment file (mc4.yml), then the entry pertaining to that change will list the command(s) to update your environment._ 
 
+* 2025-11-25:
+  - step1.py: Added error trapping on atom.loadline call
+  - mfe.py: Updated & moved to MCCE_bin
+  - __Apply changes: cd to your clone, then run `git pull`__
+
 * 2025-11-11:
   - Fixed deleterious typo in bin/pdbs_interfaces.py
   - __Apply changes: cd to your clone, then run `git pull`__
