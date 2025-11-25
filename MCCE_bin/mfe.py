@@ -1,21 +1,22 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
-import sys
-import os
 import math
+import os
+import sys
+
+from mcce4.constants import ph2Kcal, mev2Kcal, Kcal2kT
+
 
 fname_fort38 = "fort.38"
 fname_head3lst = "head3.lst"
 fname_pkout = "pK.out"
 fname_sumcrg = "sum_crg.out"
 
-ph2Kcal = 1.364
-mev2Kcal = 0.0235
-Kcal2kT = 1.688
 
-# Normally a residue is divided into two groups based on total charge. If more than two charge states are detected or
-# a mfe analysis is needed for groups with the same charge, you can specify the grouping rule here.
+# Normally a residue is divided into two groups based on total charge. 
+# If more than two charge states are detected or a mfe analysis is needed
+# for groups with the same charge, you can specify the grouping rule here.
 #              RES  : ground  excited
 Special_res = {"_CU": (["+1"], ["+2"]),
                "UbQ": (["01"], ["-1"]),
@@ -188,7 +189,8 @@ def get_mfe(env, residue, mfe_ph, mfe_xts, mfe_pwcut, pKa):
     for conf in mfe_conformers:
         conf.pHeffect = [0.0 for i in range(len(titration.range))]
         conf.Eheffect = [0.0 for i in range(len(titration.range))]
-        conf.res_mfe = [[0.0 for i in range(len(titration.range))] for x in titration.residues]
+        conf.res_mfe = [[0.0 for i in range(len(titration.range))] 
+                        for x in titration.residues]
         conf.mfe_total = [0.0 for i in range(len(titration.range))]
         conf.E_total = [0.0 for i in range(len(titration.range))]
 
@@ -210,7 +212,6 @@ def get_mfe(env, residue, mfe_ph, mfe_xts, mfe_pwcut, pKa):
 
         # make conformer mfe
         for i in range(len(titration.range)):
-
             point = titration.range[i]
             conf_mfe = [0.0 for x in titration.range]
 
@@ -258,7 +259,8 @@ def get_mfe(env, residue, mfe_ph, mfe_xts, mfe_pwcut, pKa):
     # Calculate mfe occupancy of each conformer
     SigmaE = [0.0 for i in range(len(titration.range))]
     for i in range(len(titration.range)):
-        Ei = [math.exp(-(conformer.E_total[i] - Eref) * Kcal2kT) for conformer in ground_conformers]
+        Ei = [math.exp(-(conformer.E_total[i] - Eref) * Kcal2kT) 
+              for conformer in ground_conformers]
         SigmaE[i] = sum(Ei)
 
     for conformer in ground_conformers:
@@ -288,7 +290,8 @@ def get_mfe(env, residue, mfe_ph, mfe_xts, mfe_pwcut, pKa):
     # Calculate mfe occupancy of each conformer
     SigmaE = [0.0 for i in range(len(titration.range))]
     for i in range(len(titration.range)):
-        Ei = [math.exp(-(conformer.E_total[i] - Eref) * Kcal2kT) for conformer in exited_conformers]
+        Ei = [math.exp(-(conformer.E_total[i] - Eref) * Kcal2kT) 
+              for conformer in exited_conformers]
         SigmaE[i] = sum(Ei)
 
     for conformer in exited_conformers:
@@ -362,9 +365,11 @@ def get_mfe(env, residue, mfe_ph, mfe_xts, mfe_pwcut, pKa):
                 ground_state.res_mfe[j][i] += conformer.nocc[i] * conformer.res_mfe[j][i]
 
     if mfe_xts:
-        ground_state.G = [ground_state.E_total[i] - ground_state.TS[i] for i in range(len(titration.range))]
+        ground_state.G = [ground_state.E_total[i] - ground_state.TS[i] 
+                          for i in range(len(titration.range))]
     else:
-        ground_state.G = [ground_state.E_total[i] for i in range(len(titration.range))]
+        ground_state.G = [ground_state.E_total[i] 
+                          for i in range(len(titration.range))]
 
     # energy terms of charged state
     charged_state = E_IONIZE()
@@ -376,7 +381,8 @@ def get_mfe(env, residue, mfe_ph, mfe_xts, mfe_pwcut, pKa):
     charged_state.extra = [0.0 for x in titration.range]
     charged_state.pHeffect = [0.0 for x in titration.range]
     charged_state.Eheffect = [0.0 for x in titration.range]
-    charged_state.res_mfe = [[0.0 for x in titration.range] for x in titration.residues]
+    charged_state.res_mfe = [[0.0 for x in titration.range] 
+                             for x in titration.residues]
     charged_state.mfe_total = [0.0 for x in titration.range]
     charged_state.E_total = [0.0 for x in titration.range]
     charged_state.TS = [0.0 for x in titration.range]
@@ -399,9 +405,11 @@ def get_mfe(env, residue, mfe_ph, mfe_xts, mfe_pwcut, pKa):
                 charged_state.res_mfe[j][i] += conformer.nocc[i] * conformer.res_mfe[j][i]
 
     if mfe_xts:
-        charged_state.G = [charged_state.E_total[i] - charged_state.TS[i] for i in range(len(titration.range))]
+        charged_state.G = [charged_state.E_total[i] - charged_state.TS[i] 
+                           for i in range(len(titration.range))]
     else:
-        charged_state.G = [charged_state.E_total[i] for i in range(len(titration.range))]
+        charged_state.G = [charged_state.E_total[i] 
+                           for i in range(len(titration.range))]
 
     dG = E_IONIZE()
     dG.ground_state = ground_state
@@ -607,7 +615,8 @@ def mfe(args):
     elif args.x == "f":
         mfe_xts = False
     elif env["MONTE_TSX"].upper() == "T":
-        mfe_xts = False    # Did entropy correction in Monte Carlo already, TS term should not be in mfe
+        # Entropy correction was done in Monte Carlo, TS term should not be in mfe
+        mfe_xts = False    
     else:
         mfe_xts = True
 
@@ -620,9 +629,14 @@ def mfe(args):
 
     if isinstance(mfe_ph, float):
         mfe_pwcut = float(args.c)
-
-        # By now we have residue name in args.residue[0], mfe_ph, mfe_xts and pw cutoff in arges.c
-        report = get_mfe(env=env, residue=args.residue[0], mfe_ph=mfe_ph, mfe_xts=mfe_xts, mfe_pwcut=mfe_pwcut, pKa = pKa)
+        # By now we have residue name in args.residue[0], 
+        # mfe_ph, mfe_xts and pw cutoff in arges.c
+        report = get_mfe(env=env,
+                         residue=args.residue[0], 
+                         mfe_ph=mfe_ph,
+                         mfe_xts=mfe_xts, 
+                         mfe_pwcut=mfe_pwcut,
+                         pKa = pKa)
     else:
         report = ["%s\n" % mfe_ph]
 
@@ -630,18 +644,37 @@ def mfe(args):
 
 
 if __name__ == "__main__":
-    # Get the command arguments
-    helpmsg = "Calculate mean field energy ionization energy on ionazable residue at a specific pH/eH."
-    parser = argparse.ArgumentParser(description=helpmsg)
-    parser.add_argument("-p", metavar="pH/Eh", default="m",
-                        help="pH or Eh mfe analysis is carried out, or \'m\' for midpoint")
-    parser.add_argument("-x", metavar="TS_correction", default="r",
-                        help="f: False, t: True, or r: determined by run.prm (default)")
-    parser.add_argument("-c", metavar="cutoff", default="-0.01", help="pairwise cutoff in reporting", type=float)
-    parser.add_argument("residue", metavar="residue", help="the residue name as in pK.out", nargs=1)
+    parser = argparse.ArgumentParser(
+        description= ("Calculate mean field ionization energy on an ionizable"
+                      "residue at a specific pH/eH."),
+    )
+
+    parser.add_argument(
+        "-p",
+        metavar="pH/Eh",
+        default="m",
+        help="The pH or Eh mfe analysis is carried out, or \'m\' for midpoint; default: %(default)s"
+        )
+    parser.add_argument(
+        "-x",
+        metavar="TS_correction",
+        default="r",
+        help="One of: f: False, t: True, or r: determined by run.prm; default: %(default)s"
+        )
+    parser.add_argument(
+        "-c",
+        metavar="cutoff",
+        type=float,
+        default="-0.01",
+        help="Pairwise energy cutoff in reporting; default: %(default)s"
+        )
+    parser.add_argument(
+        "residue",
+        metavar="residue",
+        nargs=1,
+        help="The residue name as in pK.out; default: %(default)s")
 
     args = parser.parse_args()
 
     report = mfe(args)
     sys.stdout.writelines(report)
-
