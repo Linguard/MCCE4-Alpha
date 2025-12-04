@@ -54,6 +54,7 @@ If you want to re-create it, run this command before running the script:
 __🚀 Run Your First Job:__ [Quick Start](https://gunnerlab.github.io/mcce4_tutorial/docs/guide/quick_start/)  
 
 __📖 MCCE4-Alpha Tutorial:__ [Full Documentation](https://gunnerlab.github.io/mcce4_tutorial/)
+
 Comprehensive documentation covering:
 - Installation
 - Guide: Detailed explanations of all settings
@@ -61,6 +62,7 @@ Comprehensive documentation covering:
 
 ## MCCE4-Tools 🔧  
 Please also check out the companion repository __MCCE4-Tools__. 
+
 🧰 __Explore Now:__ [MCCE4-Tools GitHub](https://github.com/GunnerLab/MCCE4-Tools)
 ---
 
