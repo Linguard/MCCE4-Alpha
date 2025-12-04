@@ -18,14 +18,14 @@ Given the structure of a macromolucule (in a PDB file), __MCCE4__ can predict th
 In this program, protein side chain motions are simulated explicitly while the dielectric effect of solvent and bulk protein material is modeled by continuum electrostatics.
 
 ## __Installation__
-### If you have sudo access or would like a system-wide installation of the needed softwares:
+#### If you have sudo access or would like a system-wide installation of the needed softwares:
 The file `MCCE_bin/sudo_install.txt` has the necessary information for you or your sys admin to install the packages. To display the file, run this command:
 ```
  cat ./MCCE_bin/sudo_install.txt
 ```
 
 ## __Quick Installation__
-### "Quick Install" script `MCCE_bin/quick_install.sh`:
+#### "Quick Install" script `MCCE_bin/quick_install.sh`:
 __Note: The quick install script will not modify an existing conda environment named 'mc4'.__ 
 If you want to re-create it, run this command before running the script:
 ```
