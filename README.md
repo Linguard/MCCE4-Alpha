@@ -4,17 +4,17 @@
   <img src="docs/images/mcce_logo1.png" alt="MCCE Logo" style="max-width: 100%; height: auto;">
 </p>
 
-## Welcome to __MCCE4-Alpha__!  
+# Welcome to __MCCE4-Alpha__!  
 
 #### See our CHANGELOG at the bottom for the latest updates!
 
-# If you have sudo access or would like a system-wide installation of the needed softwares:
+## If you have sudo access or would like a system-wide installation of the needed softwares:
 The file `MCCE_bin/sudo_install.txt` has the necessary information for you or your sys admin to install the packages. To display the file, run this command:
 ```
  cat ./MCCE_bin/sudo_install.txt
 ```
 
-# "Quick Install" script `MCCE_bin/quick_install.sh`:
+## "Quick Install" script `MCCE_bin/quick_install.sh`:
 __Note: The quick install script will not modify an existing conda environment named 'mc4'.__ 
 If you want to re-create it, run this command before running the script:
 ```
