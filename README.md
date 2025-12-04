@@ -5,7 +5,7 @@
 </p>
 
 # Welcome to __MCCE4-Alpha__!  
-#### See our CHANGELOG at the bottom for the latest updates!
+- Please see our CHANGELOG at the bottom for the latest updates!
 
 ## __Quick Introduction__
 
