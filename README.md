@@ -5,8 +5,17 @@
 </p>
 
 # Welcome to __MCCE4-Alpha__!  
-
 #### See our CHANGELOG at the bottom for the latest updates!
+
+## __Quick Introduction__
+
+Given the structure of a macromolucule (in a PDB file), __MCCE4__ can predict the following:
+
+- __pKₐ values__
+- __Protonation states__
+- __Electrostatic properties__ of biomolecules
+
+In this program, protein side chain motions are simulated explicitly while the dielectric effect of solvent and bulk protein material is modeled by continuum electrostatics.
 
 ## If you have sudo access or would like a system-wide installation of the needed softwares:
 The file `MCCE_bin/sudo_install.txt` has the necessary information for you or your sys admin to install the packages. To display the file, run this command:
@@ -52,16 +61,6 @@ Please also check out the companion repository __MCCE4-Tools__.
 🧰 __Explore Now:__ [MCCE4-Tools GitHub](https://github.com/GunnerLab/MCCE4-Tools)
 
 ---
-
-## __Quick Introduction__
-
-Given the structure of a macromolucule (in a PDB file), __MCCE4__ can predict the following:
-
-- __pKₐ values__
-- __Protonation states__
-- __Electrostatic properties__ of biomolecules
-
-In this program, protein side chain motions are simulated explicitly while the dielectric effect of solvent and bulk protein material is modeled by continuum electrostatics.
 
 ## __Documentation Overview__
 Comprehensive documentation covering:
