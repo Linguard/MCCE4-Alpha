@@ -50,9 +50,6 @@ If you want to re-create it, run this command before running the script:
   - Adds export commands to the PATH variable in ~/.bashrc for:
     * 'MCCE4/bin' and 'MCCE4/MCCE4_bin'
     * the unprivilege version of Apptainer if installed by the script
- - Script code: [quick_install.sh](./MCCE_bin/quick_install.sh)
-
-#### Quick Installation:
 
 __🚀 Run Your First Job:__ [Quick Start](https://gunnerlab.github.io/mcce4_tutorial/docs/guide/quick_start/)  
 
