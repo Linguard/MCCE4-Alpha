@@ -17,18 +17,30 @@ Given the structure of a macromolucule (in a PDB file), __MCCE4__ can predict th
 
 In this program, protein side chain motions are simulated explicitly while the dielectric effect of solvent and bulk protein material is modeled by continuum electrostatics.
 
-## If you have sudo access or would like a system-wide installation of the needed softwares:
+## __Installation__
+### If you have sudo access or would like a system-wide installation of the needed softwares:
 The file `MCCE_bin/sudo_install.txt` has the necessary information for you or your sys admin to install the packages. To display the file, run this command:
 ```
  cat ./MCCE_bin/sudo_install.txt
 ```
 
-## "Quick Install" script `MCCE_bin/quick_install.sh`:
+## __Quick Installation__
+### "Quick Install" script `MCCE_bin/quick_install.sh`:
 __Note: The quick install script will not modify an existing conda environment named 'mc4'.__ 
 If you want to re-create it, run this command before running the script:
 ```
  conda env remove -n mc4
 ```
+
+  1. Clone this repo, then cd into it with this command:
+  ```
+   git clone https://github.com/GunnerLab/MCCE4-Alpha.git; cd MCCE4-Alpha;
+  ```
+  
+  2. Run the `quick_install.sh` script to download MCCE PBE solver (NGPB) image file and create a conda environment for MCCE4 (this may need several passes if you need to install dependencies such as miniconda and apptainer):
+  ```
+   bash ./MCCE_bin/quick_install.sh
+  ``` 
 
 ### What this script does:
   - Checks for required `conda`; Stops if not found so you can install it (commands provided).
@@ -41,15 +53,6 @@ If you want to re-create it, run this command before running the script:
  - Script code: [quick_install.sh](./MCCE_bin/quick_install.sh)
 
 #### Quick Installation:
-  1. Clone this repo, then cd into it with this command:
-  ```
-   git clone https://github.com/GunnerLab/MCCE4-Alpha.git; cd MCCE4-Alpha;
-  ```
-  
-  2. Run the `quick_install.sh` script to download MCCE PBE solver (NGPB) image file and create a conda environment for MCCE4 (this may need several passes if you need to install dependencies such as miniconda and apptainer):
-  ```
-   bash ./MCCE_bin/quick_install.sh
-  ``` 
 
 __🚀 Run Your First Job:__ [Quick Start](https://gunnerlab.github.io/mcce4_tutorial/docs/guide/quick_start/)  
 
