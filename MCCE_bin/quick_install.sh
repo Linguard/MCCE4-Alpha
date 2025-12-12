@@ -164,7 +164,8 @@ if [[ "$DO_CONDA" -eq 1 ]]; then
   ENVS="$(conda env list)"
   # check if env with default name already exists:
   if echo "$ENVS" | grep -q "^${ENV_NAME}\s\+"; then
-    echo "  Env '$ENV_NAME' already exists. Make sure it complies with $CLONE_PATH/$YML."
+    echo "  Updating existing '$ENV_NAME' env..."
+    conda env update -n $ENV_NAME -f "$CLONE_PATH/$YML"
   else
     echo "  Creating a dedicated conda env with default name: $ENV_NAME"
     conda env create -f "$CLONE_PATH/$YML"
