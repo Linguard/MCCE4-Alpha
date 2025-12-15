@@ -21,7 +21,7 @@ logger.setLevel(logging.INFO)
 CUSTOM_S1_SH = """#!/bin/bash
 
 step1.py prot.pdb {wet}{noter}{d}{e}{u}
-sleep 1
+sleep 2
 """
 
 s1_defaults = {

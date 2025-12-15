@@ -1553,13 +1553,19 @@ class Structure:
                     toti += cnt
                 else:
                     toto += cnt
-
-            chn_dict = {"RESIDUES": (", ".join(r for r in sorted(residues)),
-                                     f"Total: {tot_chn_res}",
-                                     f"Ionizable: {toti}",
-                                     f"Ratio: {toti/tot_chn_res:.1%}",
-                                     )
-                        }
+            if tot_chn_res:
+                chn_dict = {"RESIDUES": (", ".join(r for r in sorted(residues)),
+                                        f"Total: {tot_chn_res}",
+                                        f"Ionizable: {toti}",
+                                        f"Ratio: {toti/tot_chn_res:.1%}"
+                                        )
+                            }
+            else:
+                chn_dict = {"RESIDUES": (", ".join(r for r in sorted(residues)),
+                                        f"Total: {tot_chn_res}",
+                                        f"Ionizable: {toti}"
+                                        )
+                            }
             model_dict[chn] = chn_dict
 
         return dict(model_dict)
@@ -1681,17 +1687,9 @@ def update_dist_folder(pathname):
     return updated_pathname
 
 
-def is_H(atom_name):
-    H = False
-    atom = atom_name.strip()
-    if len(atom) == 4:  # full 4 chars
-        if atom_name[0] == "H":
-            H = True
-        else:
-            H = False
-    else:
-        if atom_name[1] == "H":
-            H = True
-        else:
-            H = False
-    return H
+H_REGEX = re.compile(r"(^[0-9]|^[a-z])?H")
+
+
+def is_H(atom_name: str) -> bool:
+    """Check if an atom name corresponds to a hydrogen atom."""
+    return H_REGEX.match(atom_name.strip()) is not None

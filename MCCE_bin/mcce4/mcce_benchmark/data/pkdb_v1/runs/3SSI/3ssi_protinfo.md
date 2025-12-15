@@ -1,0 +1,51 @@
+---
+# 3SSI :: Proteinase Inhibitor Ssi (Streptomyces Subtilisin, Inhibitor) From Streptomyces Albogriseolus;
+## PDB.Structure
+### Function: SERINE PROTEASE INHIBITOR
+### First Release: 01-MAR-96
+### Method: X-RAY DIFFRACTION
+### Resolution: 2.30 ANGSTROMS.
+### Molecule: STREPTOMYCES SUBTILISIN INHIBITOR
+### Seqres Species: Residues: A:113; Total: 113
+### Total waters: 31
+### Missing:
+  - Residues:
+ 'A': [('ASP', 1), ('ALA', 2), ('PRO', 3), ('SER', 4), ('ALA', 5), ('Count', 5)]
+
+### Biounits: DIMERIC: A;
+### Models: 1
+### Chains: A
+### Model 1 Residues:
+  - A:
+ 'RESIDUES': ('ALA: 16, ARG: 4, ASN: 3, ASP: 5, CYS: 4, GLN: 1, GLU: 5, GLY: 11, HIS: 2, LEU: 9, LYS: 2, MET: 3, PHE: 3, PRO: 7, SER: 8, THR: 8, TRP: 1, TYR: 3, VAL: 13', 'Total: 108', 'Ionizable: 25',
+              'Ratio: 23.1%')
+
+### Model 1 Free Cofactors & Waters:
+  - A:
+ 'HOH': 31
+
+### Disulfides:
+  - CYS A  35 -- 2.03 Å --> CYS A  50
+  - CYS A  71 -- 2.02 Å --> CYS A 101
+
+### Sites:
+  - PCR: ['THE PRIMARY CONTACT REGION (PCR) CONSISTS OF P7', 'GLU A  67', 'ASP A  68', 'VAL A  69', 'MET A  70', 'CYS A  71', 'PRO A  72', 'MET A  73', 'VAL A  74', 'TYR A  75']
+  - SCR: ['THE SECONDARY CONTACT REGION (SCR) IS LOCATED', 'SER A  98', 'ASN A  99', 'GLU A 100', 'CYS A 101', 'GLU A 102']
+
+## MCCE.Step1
+### Termini:
+ - <strong>NTR</strong>: "LEU A   6"
+ - <strong>CTR</strong>: "PHE A 113"
+
+### Free Cofactors:
+  - NOTE: Include the '--wet' option at the command line to keep buried waters and cofactors. Alternatively, change the water SAS cutoff to a non-zero, positive number using the command line 'u' option:
+  > protinfo 1fat.pdb -u H2O_SASCUTOFF=0.05
+  - Total deleted cofactors = 31.
+
+### Distance Clashes:
+<details><summary>Clashes found</summary>
+
+- d= 1.53: " CA  NTR A   6" to " CB  LEU A   6"
+
+</details>
+

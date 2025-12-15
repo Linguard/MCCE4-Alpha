@@ -29,10 +29,6 @@ from mcce4.protinfo.io_utils import ENV, get_path_keys, retry
 logger = logging.getLogger(__name__)
 
 
-WARN_MULTI_MODELS = ("MCCE cannot handle multi-model proteins; Model 1 is parsed by default "
-                     "to obtain basic information, but MCCE4 pdb loader can only handle single "
-                     "model pdbs."
-                     )
 WARN_MALFORMED_PDB = ("MCCE could not parse the pdb into at least one model, possibly "
                       "due to a missing MODEL line."
                       )
@@ -62,8 +58,6 @@ def info_input_prot(pdb: Path) -> dict:
     if info_d["PDB.Structure"].get("Models") is not None:
         if info_d["PDB.Structure"]["Models"] == "0":
             info_d["PDB.Structure"]["Malformed PDB"] = WARN_MALFORMED_PDB
-        elif info_d["PDB.Structure"]["Models"] != "1":
-            info_d["PDB.Structure"]["MultiModels"] = WARN_MULTI_MODELS
 
     return info_d
 
@@ -263,6 +257,7 @@ class RunLog1Parser:
         self.txt_blocks = None
         self.runprm = None  # self.get_runprm()
         self.dry_opt = None  # float(self.runprm["H2O_SASCUTOFF"]) == -0.01
+        self.failed_run = None
 
     def get_runprm(self) -> dict:
         env = ENV(self.s1_dir)
@@ -270,7 +265,7 @@ class RunLog1Parser:
         return env.runprm
 
     @retry()   # 6 times: default
-    def get_log_contents(self) -> str:
+    def get_log_contents(self) -> Union[str, None]:
         """Read entire contents of run1.log file."""
         text = ""
         log_fp = self.s1_dir.joinpath(RUN1_LOG)
@@ -286,7 +281,12 @@ class RunLog1Parser:
         last_line = "Step 1 Done."
         last_found = text.find(last_line)
         if last_found == -1:
-            logger.error("Step1 log missing completion statement: run ended with error.")
+            self.failed_run = text.find("FATAL") != -1
+            if self.failed_run:
+                logger.error("Step1 failed with 'FATAL' statement(s).")
+            else:
+                logger.error("Step1 log missing completion statement: run ended with error.")
+            #return None
         
         return text
 
@@ -557,13 +557,16 @@ def info_s1_log(pdb: Path) -> dict:
     s1log.runprm = s1log.get_runprm()
     s1log.dry_opt = float(s1log.runprm["H2O_SASCUTOFF"]) == -0.01
 
-    s1_text = s1log.get_log_contents()
-    s1log.get_blocks(s1_text)
-
-    # set the section data with dict & cleanup heavy atoms section:
     dout = {}
+    s1_text = s1log.get_log_contents()
+    #if s1_text is not None:
+    s1log.get_blocks(s1_text)
+    # set the section data with dict & cleanup heavy atoms section:
     dout = {"MCCE.Step1": s1log.txt_blocks}
-    dout = filter_heavy_atm_section(pdb, dout)
+    if not s1log.failed_run:
+        dout = filter_heavy_atm_section(pdb, dout)
+    else:
+        dout["MCCE.Step1"].update({"Status": "Failed"})
 
     return dout
 
@@ -622,6 +625,9 @@ def update_s1_dict_cofactors_change(pdb: Path, prot_d: dict, step1_d: dict):
     """
     if prot_d["PDB.Structure"].get("Model 1 Free Cofactors & Waters") is None:
         return
+    if step1_d["MCCE.Step1"].get("Status") is not None:
+        # key set only for failed runs
+        return
 
     pdb_heteros = prot_d["PDB.Structure"]["Model 1 Free Cofactors & Waters"]
 
@@ -663,7 +669,6 @@ def collect_info(pdb: Path, args: Namespace) -> Tuple[dict, Union[dict, None]]:
     prot_d = info_input_prot(pdb)
 
     DO_STEP1 = (USER_MCCE is not None
-                and prot_d["PDB.Structure"].get("MultiModels") is None
                 and prot_d["PDB.Structure"].get("UNUSABLE") is None
     )
 
@@ -671,10 +676,11 @@ def collect_info(pdb: Path, args: Namespace) -> Tuple[dict, Union[dict, None]]:
         result = run.do_step1(pdb, args)
         if result is None:  # no error message
             step1_d = info_s1_log(pdb)
-            # update cofactors section changes if any:
-            update_s1_dict_cofactors_change(pdb, prot_d, step1_d)
+            if step1_d["MCCE.Step1"] != "Failed":
+                # update cofactors section changes if any:
+                update_s1_dict_cofactors_change(pdb, prot_d, step1_d)
         else:
-            step1_d = {"MCCE.Step1": f"Error in run script 's1.sh': {result}."}
+            step1_d = {"MCCE.Step1": f"Error: {result}."}
 
     return prot_d, step1_d
 
@@ -700,9 +706,14 @@ def write_report(pdb: Path, prot_d: dict, s1_d: Union[dict, None]):
 
         for i, subd in enumerate(dict_lst):
             # h2: section hdrs, PDB.Structure or MCCE.Step1
-            h2 = list(subd.keys())[0]
-            rpt.write(f"## {h2}\n")
+            subd_keys = list(subd.keys())
+            h2 = subd_keys[0]
 
+            if not isinstance(subd[h2], dict):
+                rpt.write(f"## {h2} :: {subd[h2]}\n")
+                break
+    
+            rpt.write(f"## {h2}\n")
             for k in subd[h2]:
                 if not subd[h2][k]:
                     continue
@@ -728,6 +739,10 @@ def write_report(pdb: Path, prot_d: dict, s1_d: Union[dict, None]):
                             else:
                                 rpt.write(f"  - {kk}: {vv}\n")
                 else: 
+                    vals = subd[h2][k]
+                    if isinstance(vals, str):
+                        rpt.write(f"### {k}: {vals}\n")
+                        continue
                     rpt.write(f"### {k}:\n")
                     for val in subd[h2][k]:
                         if k == "Distance Clashes":

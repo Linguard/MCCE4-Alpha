@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Module: io_utils.py
@@ -320,12 +320,20 @@ DIFFING_FILES = [
     "vdw0.lst",
 ]
 
+
 # files listed have a variable column 1 header depending on titr type:
+TITR_TYPE_FILES = ["entropy.out", "fort.38", "pK.out", "sum_crg.out"]
+# files with data over a variable titration range, hdr: <ph> 0 1 2 3 4...
+TITRATION_FILES = ["entropy.out", "fort.38", "sum_crg.out"]
+
+# TODO: deprecate these:
 titr_type_files = ["entropy.out", "fort.38", "pK.out", "sum_crg.out"]
-
-
-# files with data over a titration, hdr: <ph> 0 1 2 3 4...
 titration_files = ["entropy.out", "fort.38", "sum_crg.out"]
+
+
+def diffing_ready(fp1: Path, fp2: Path) -> bool:
+    s = set([fp1.name, fp2.name]).difference(set(DIFFING_FILES))
+    return len(s) == 0
 
 
 class ToDf:
@@ -333,7 +341,6 @@ class ToDf:
     This dict is used to (re)set the header of the file parsed by pandas
     for some files: head3.lst and the acc files.
     """
-
     headers_dict = {
         "head3.lst":
         # last colname 'm' ('mark') added for correct column parsing/splitting
@@ -390,7 +397,7 @@ class ToDf:
             logger.error(mf("File {!r} cannot be loaded into a pandas.DataFrame.", which))
             return None
 
-        df = pd.read_csv(fp, sep=r"\s+")  # noqa: W605
+        df = pd.read_csv(fp, sep="\s+")  # noqa: W605
         if fname not in ToDf.headers_dict:
             if (fname in ["pK.out", "all_pK.out"]) or which == "pK.out":
                 if "note" not in df.columns:
@@ -408,21 +415,7 @@ class ToDf:
                     cols = [cols0[0]] + ["note"] + cols0[1:-1]
                     df = df[cols]
                     # update 'note' column with oob and bad fit:
-                    df = df.apply(
-                        self.reset_pk_oob,
-                        axis=1,
-                    )
-
-            if (fname in ["pK.out", "sum_crg.out"]) or (
-                which in ["pK.out", "sum_crg.out"]
-            ):
-                # replace -0. -> 0.
-                try:
-                    df.update(
-                        df.select_dtypes(include="float64").apply(lambda x: x + 0.0)
-                    )
-                except AttributeError:
-                    df.update(df[df.apply(type) == "float64"].apply(lambda x: x + 0.0))
+                    df = df.apply(self.reset_pk_oob, axis=1)
 
             return df
 
@@ -463,12 +456,12 @@ def read_titr_type(fpath: Path) -> str:
     return hdr.split()[0].strip()
 
 
-def drop_unpaired_cols(
-    df1: pd.DataFrame, df2: pd.DataFrame
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """Return the input dfs with matching titration columns."""
+def drop_unpaired_cols(df1: pd.DataFrame, df2: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Return the input dfs with matching titration columns.
+    """
     s1 = set(df1.columns.to_list())
     s2 = set(df2.columns.to_list())
+
     intr1 = s1.difference(s2)  # elements only in df1
     intr2 = s2.difference(s1)  # elements only in df2
     if intr1:
@@ -481,9 +474,56 @@ def drop_unpaired_cols(
     return df1, df2
 
 
-def diffing_ready(fp1: Path, fp2: Path) -> bool:
-    s = set([fp1.name, fp2.name]).difference(set(DIFFING_FILES))
-    return len(s) == 0
+def match_dfs_dims(df1: pd.DataFrame, df2: pd.DataFrame,
+                   file_type: str,
+                   match_col: str,
+                   names: tuple) -> Tuple[pd.DataFrame,pd.DataFrame]:
+    """Resize the input dataframes to common dimensions.
+      Args:
+       - match_col (str): The name of the column to be set as index.
+       - names (tuple(str, str)): Names of the parent folders, or data sources.
+    """
+    if file_type in TITRATION_FILES:  # columns can differ
+        if df1.shape[1] != df2.shape[1]:
+            com_idx = [c for c in set(df1.columns).intersection(set(df2.columns))]
+            if not com_idx:
+                logger.error(f"The dfs for sets {names} have no columns in common.")
+                return None, None
+
+            com_idx.sort()
+            df1 = df1[com_idx]
+            df2 = df2[com_idx]
+
+    # match rows maybe:
+    if df1.shape[0] == df2.shape[0]:
+        return df1, df2
+    
+    # set df index to match_col in order to retrieve common rows:
+    try:
+        df1 = df1.set_index(match_col)
+    except (IndexError, Exception) as e:
+        logger.warning("Could not set the index on df1, match_col not found: %", match_col)
+        return df1, df2
+    try:
+        df2 = df2.set_index(match_col)
+    except (IndexError, Exception) as e:
+        logger.warning("Could not set the index on df2, match_col not found: %", match_col)
+        return df1, df2
+
+    # get common rows:
+    com_idx = [idx for idx in set(df1.index).intersection(set(df2.index))]
+    if not com_idx:
+        logger.error(f"The dfs for sets {names} have no rows in common.")
+        return None, None
+
+    # reduce dfs rows to the common ones & reset their index
+    com_idx.sort()
+    df1 = df1.loc[com_idx]
+    df1 = df1.reset_index()
+    df2 = df2.loc[com_idx]
+    df2 = df2.reset_index()
+
+    return df1, df2
 
 
 def files_diff(
@@ -543,72 +583,88 @@ def files_diff(
         same_type = titr1 == titr2
 
     if not same_type:
-        logger.error(
-            mf("Can't diff {!r} files with different titration types.", which_name)
-        )
+        logger.error("Can't diff %s files with different titration types.", which_name)
         return
 
     df1 = mcfile2df(fp1, file_type=file_type)
     df2 = mcfile2df(fp2, file_type=file_type)
 
-    ph = ""
+    titr = ""
     # for getting matched_colname from column index:
     matchcol = 0
     if which_name == "head3.lst":
         matchcol = 1
-
     match_colname = df1.columns.to_list()[matchcol]
 
     if which_name != "head3.lst":
-        ph = match_colname[:2]
+        # the titr type is in the header
+        titr = match_colname[:2]
 
-    if which_name in titration_files:
-        if df1.shape[1] != df2.shape[1]:
-            df1, df2 = drop_unpaired_cols(df1, df2)
+    names = fp1.parent.parent.stem, fp2.parent.parent.stem
+    # match dimensions for subtraction:
+    df1, df2 = match_dfs_dims(df1, df2, which_name, match_colname, names)
+    if df1 is None:
+        # so is the other one:
+        logger.error("Dataframes have no data in common.")
+        return None
 
-    diff_df = df1.select_dtypes(exclude="object").sub(
-        df2.select_dtypes(exclude="object"), axis="index"
-    )
+    # save the values of the match_col:
+    match_names = df1[match_colname].values
+    # df1 = df1.set_index(match_colname)
+    # df2 = df2.set_index(match_colname)
+    diff_df = df1.select_dtypes(exclude="object").sub(df2.select_dtypes(exclude="object"),
+                                                      axis="index")
     if threshold is not None:
         msk = diff_df.select_dtypes(exclude="object").abs() > threshold
         diff_df = diff_df.where(msk, other=pd.NA)
 
+    cols = [match_colname] + diff_df.columns.tolist()  #  add names column 1st
     # add the names column values back:
-    diff_df[match_colname] = df1[match_colname].values
+    diff_df[match_colname] = match_names
 
-    if which_name == "head3.lst":
-        # also add back iConf col
-        diff_df["iConf"] = [f"{c:>05}" for c in df1["iConf"]]
-        cols = ["iConf", match_colname] + diff_df.columns.to_list()[:-2]
+    # reorder cols
+    if which_name in ["head3.lst", "pK.out"]:
+        if which_name == "head3.lst":
+            # also add back iConf col
+            diff_df["iConf"] = [f"{c:>05}" for c in df1["iConf"]]
+            cols = ["iConf", match_colname] + diff_df.columns.to_list()[:-2]
 
-    elif which_name == "pK.out":
-        # add back new note column
-        diff_df["note"] = [
-            f"{n1}|{n2}" if ((n1 != "-") or (n2 != "-")) else pd.NA
-            for (n1, n2) in zip(df1["note"], df2["note"])
-        ]
-        cols = [match_colname, "note"] + diff_df.columns.to_list()[:-2]
-
-    else:
-        cols = [match_colname] + diff_df.columns.to_list()[:-1]
-
-    # reset df with all columns
+        elif which_name == "pK.out":
+            # add back new note column
+            diff_df["note"] = [
+                f"{n1}|{n2}" if ((n1 != "-") or (n2 != "-")) else pd.NA
+                for (n1, n2) in zip(df1["note"], df2["note"])
+            ]
+            cols = [match_colname, "note"] + diff_df.columns.to_list()[:-2]
+    # reset df with all columns in new order:
     diff_df = diff_df[cols]
+
+    if file_type in TITRATION_FILES:
+        # sort:
+        col1, col2 = match_colname.split(":")
+        diff_df[[col1, col2]] = diff_df[match_colname].str.split(pat=":", expand=True)
+        if file_type == "sum_crg.out":
+            # trick to get the same order on total rows as in sum_crg.out:
+            diff_df[col2] = diff_df[col2].str.replace("Electrons", "Eleztrons")
+        diff_df["confid"] = diff_df[col2].str[-6:]  # e.g. A0001_
+        diff_df = diff_df.sort_values(by=[col1, "confid"])
+        diff_df = diff_df.drop([col1, col2, "confid"], axis=1)
+
     newname = "Diff"
     if collated:
         if ":" in match_colname:  # PDB:pH
-            _, s2 = match_colname.split(":")
-            newname = f"{newname}:{s2}"
+            _, titr = match_colname.split(":")
+            newname = f"{newname}:{titr}"
     else:
-        newname = f"{newname}:{ph}"
+        newname = f"{newname}:{titr}"
     diff_df.rename(columns={match_colname: newname}, inplace=True)
 
-    # remove all-NA columns:
-    diff_df.dropna(how="all", inplace=True, axis=1)
-    # remove all-NA rows:
-    diff_df.set_index(newname, inplace=True)
-    diff_df.dropna(how="all", inplace=True, axis=0)
-    diff_df.reset_index(drop=False, inplace=True)
+    # # remove all-NA columns:
+    # diff_df.dropna(how="all", inplace=True, axis=1)
+    # # remove all-NA rows:
+    # diff_df.set_index(newname, inplace=True)
+    # diff_df.dropna(how="all", inplace=True, axis=0)
+    diff_df.reset_index(drop=True, inplace=True)
     # replace remaining NAs to 0:
     # diff_df.where(~diff_df.isna(), other=0, inplace=True)
 
@@ -616,9 +672,8 @@ def files_diff(
     if not out_name:
         diff_fp = out_dir.joinpath(f"diff_{fn1}")
     else:
-        print("out_name is not None", out_name)
         diff_fp = out_dir.joinpath(out_name)
-    diff_df.to_string(diff_fp, float_format="{:>5.2f}".format, index=False)
+    diff_fp.write_text(diff_df.to_string(float_format="{:>5.2f}".format, index=False) + "\n")
 
     if return_df:
         return diff_df
