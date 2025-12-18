@@ -2,7 +2,7 @@
 # 2. Structure Connectivity:
 # 3. Atom Parameters: Partial Charges and Radii
 #    - Partial Charges: Provided by Hiroshi Ishikita (no tail + C1/H11/H22)
-#    - Table S3: Energetic insights into two electron transfer pathways in light-driven energy-converting enzymes, 2018_JChemSci (DOI: 10.1039/c8sc00424b)       
+#    - Table S2: Energetic insights into two electron transfer pathways in light-driven energy-converting enzymes, 2018_JChemSci (DOI: 10.1039/c8sc00424b)       
 # 4. Tested with Lv1 and NGPB w/ LigandExpo Ideal PDB: CLA_ideal.pdb -> CPA_ideal_noHs.pdb
 #    - Requires isoprene tail units topology file: CT1_ishikita_tail.ftpl, CT2_ishikita_tail.ftpl, CT3_ishikita_tail.ftpl, CT4_ishikita_tail.ftpl
 # File Created by Gehan Ranepura on 12/18/2025
