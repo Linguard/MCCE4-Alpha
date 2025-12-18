@@ -24,7 +24,7 @@ DE***** ******  HE*****_******
 DE************  HE************
 *****HEA******  *****HEM******
 *****HEC******  *****HEM******
-*CAA*HEM******  *****PAA******      extract PAA from heme
+*CAA*HEM******  *****PAA******      extract propionate PAA from heme
 *CBA*HEM******  *****PAA******
 *CGA*HEM******  *****PAA******
 *O1A*HEM******  *****PAA******
@@ -33,7 +33,7 @@ HAA**HEM******  *****PAA******
 HBA**HEM******  *****PAA******
 *H1A*HEM******  *****PAA******
 *H2A*HEM******  *****PAA******
-*CAD*HEM******  *****PDD******      extract PDD from heme
+*CAD*HEM******  *****PDD******      extract propionate PDD from heme
 *CBD*HEM******  *****PDD******
 *CGD*HEM******  *****PDD******
 *O1D*HEM******  *****PDD******
@@ -43,26 +43,8 @@ HBD**HEM******  *****PDD******
 *H1D*HEM******  *****PDD******
 *H2D*HEM******  *****PDD******
 
-*CAA*HEC******  *****PAA******      extract PAA from HECe
-*CBA*HEC******  *****PAA******
-*CGA*HEC******  *****PAA******
-*O1A*HEC******  *****PAA******
-*O2A*HEC******  *****PAA******
-HAA**HEC******  *****PAA******
-HBA**HEC******  *****PAA******
-*H1A*HEC******  *****PAA******
-*H2A*HEC******  *****PAA******
-*CAD*HEC******  *****PDD******      extract PDD from HECe
-*CBD*HEC******  *****PDD******
-*CGD*HEC******  *****PDD******
-*O1D*HEC******  *****PDD******
-*O2D*HEC******  *****PDD******
-HAD**HEC******  *****PDD******
-HBD**HEC******  *****PDD******
-*H1D*HEC******  *****PDD******
-*H2D*HEC******  *****PDD******
-
-*C11*HEM******  *****FAR******      extract FAR from heme
+*C11*HEM******  *****FAR******      extract aliphatic farnesyl tail FAR from heme
+*O11*HEM******  *****FAR******
 *C12*HEM******  *****FAR******
 *C13*HEM******  *****FAR******
 *C14*HEM******  *****FAR******
@@ -79,9 +61,8 @@ HBD**HEC******  *****PDD******
 *C25*HEM******  *****FAR******
 *C26*HEM******  *****FAR******
 *C27*HEM******  *****FAR******
-*O11*HEM******  *****FAR******
 
-*CAA*CYC******  *****PAA******      extract PAA from cyc  added by Gehan (07/26/22)
+*CAA*CYC******  *****PAA******      extract proprionate PAA from cyc  added by Gehan (07/26/22)
 *CBA*CYC******  *****PAA******
 *CGA*CYC******  *****PAA******
 *O1A*CYC******  *****PAA******
@@ -90,7 +71,7 @@ HBD**HEC******  *****PDD******
 *H24*CYC******  HAA2*PAA******
 *H07*CYC******  HBA1*PAA******
 *H28*CYC******  HBA2*PAA******
-*CAD*CYC******  *****PDD******      extract PDD from cyc  added by Gehan (07/26/22)
+*CAD*CYC******  *****PDD******      extract propionate PDD from cyc  added by Gehan (07/26/22)
 *CBD*CYC******  *****PDD******
 *CGD*CYC******  *****PDD******
 *O1D*CYC******  *****PDD******
@@ -112,8 +93,13 @@ HBD**HEC******  *****PDD******
  N **PCA******   N_***********
  O **ACN******   O_***********
  C **ACN******   C_***********
-***** ZN******  *****_ZN******
-***** NA******  *****_NA******
+ZN ** ZN******  ZN **_ZN******
+NA ** NA******  NA **_NA******
+ K **  K******   K **__K******
+CA ** CA******  CA **_CA******      added by Gehan
+CL ** CL******  CL **_CL******      added by Gehan
+MG ** MG******  MG **_MG******      added by Gehan
+MN ** MN******  MN **_MN******      added by Gehan
 
 *NA  CLA******  *N1A CLA******      rename Chl a/b/d/f atoms - added by Gehan 
 *NB  CLA******  *N1B CLA******          
@@ -148,7 +134,32 @@ HBD**HEC******  *****PDD******
 *NC  AOB******  *N1C AOB******
 *ND  AOB******  *N1D AOB******
 
-*C1  CL*******  *C1  CT1******      create Chl a/b/d tail - added by Gehan
+*NA  CPA******  *N1A CPA******      rename Chl a (CPA) Ishikita atoms - added by Gehan
+*NB  CPA******  *N1B CPA******
+*NC  CPA******  *N1C CPA******
+*ND  CPA******  *N1D CPA******
+*C1  CPA******  *C1  CPA******      
+*C2  CPA******  *C2  CT1******
+*C3  CPA******  *C3  CT1******
+*C4  CPA******  *C4  CT1******
+*C5  CPA******  *C5  CT1******
+*C6  CPA******  *C6  CT2******
+*C7  CPA******  *C7  CT2******
+*C8  CPA******  *C8  CT2******
+*C9  CPA******  *C9  CT2******
+*C10 CPA******  *C10 CT2******
+*C11 CPA******  *C11 CT3******
+*C12 CPA******  *C12 CT3******
+*C13 CPA******  *C13 CT3******
+*C14 CPA******  *C14 CT3******
+*C15 CPA******  *C15 CT3******
+*C16 CPA******  *C16 CT4******
+*C17 CPA******  *C17 CT4******
+*C18 CPA******  *C18 CT4******
+*C19 CPA******  *C19 CT4******
+*C20 CPA******  *C20 CT4******
+
+*C1  CL*******  *C1  CT1******      create Chl a/b/d aliphatic tail - added by Gehan
 *C2  CL*******  *C2  CT1******
 *C3  CL*******  *C3  CT1******
 *C4  CL*******  *C4  CT1******
@@ -169,7 +180,7 @@ HBD**HEC******  *****PDD******
 *C19 CL*******  *C19 CT4******
 *C20 CL*******  *C20 CT4******
 
-*C1  CHL******  *C1  CT1******      create CHL tail - added by Gehan
+*C1  CHL******  *C1  CT1******      create CHL aliphatic tail - added by Gehan
 *C2  CHL******  *C2  CT1******
 *C3  CHL******  *C3  CT1******
 *C4  CHL******  *C4  CT1******
@@ -190,7 +201,7 @@ HBD**HEC******  *****PDD******
 *C19 CHL******  *C19 CT4******
 *C20 CHL******  *C20 CT4******
 
-*C1  AvB******  *C1  CT1******      create chlorophyll tail for A vs B - added by Gehan
+*C1  AvB******  *C1  CT1******      create chlorophyll aliphatic tail for A vs B - added by Gehan
 *C2  AvB******  *C2  CT1******
 *C3  AvB******  *C3  CT1******
 *C4  AvB******  *C4  CT1******
@@ -211,7 +222,7 @@ HBD**HEC******  *****PDD******
 *C19 AvB******  *C19 CT4******
 *C20 AvB******  *C20 CT4******
 
-*C1  FRL******  *C1  CT1******      create chlorophyll tail for FRL-CHL a vs d vs f - added by Gehan
+*C1  FRL******  *C1  CT1******      create chlorophyll aliphatic tail for FRL-CHL a vs d vs f - added by Gehan
 *C2  FRL******  *C2  CT1******
 *C3  FRL******  *C3  CT1******
 *C4  FRL******  *C4  CT1******
@@ -232,7 +243,7 @@ HBD**HEC******  *****PDD******
 *C19 FRL******  *C19 CT4******
 *C20 FRL******  *C20 CT4******
 
-*C1  F6C******  *C1  CT1******      create Chl f tail - added by Gehan
+*C1  F6C******  *C1  CT1******      create Chl f aliphatic tail - added by Gehan
 *C2  F6C******  *C2  CT1******
 *C3  F6C******  *C3  CT1******
 *C4  F6C******  *C4  CT1******
@@ -288,7 +299,7 @@ HBD**HEC******  *****PDD******
 *C6E DGD******  *C6E DGB******
 *O5E DGD******  *O5E DGB******
 
-*C3A DGD******  *C3A dgd******      create DGD tail - added by Gehan (07/28/22)
+*C3A DGD******  *C3A dgd******      create DGD aliphatic tail dgd - added by Gehan (07/28/22)
 *C4A DGD******  *C4A dgd******
 *C5A DGD******  *C5A dgd******
 *C6A DGD******  *C6A dgd******
@@ -321,110 +332,122 @@ HBD**HEC******  *****PDD******
 *CHB DGD******  *CHB dgd******
 *CIB DGD******  *CIB dgd******      
 
-*C11 LMG******  *C11 lmg*******     create LMG tail - added by Gehan (01/23/23)
-*C12 LMG******  *C12 lmg*******
-*C13 LMG******  *C13 lmg*******
-*C14 LMG******  *C14 lmg*******
-*C15 LMG******  *C15 lmg*******
-*C16 LMG******  *C16 lmg*******
-*C17 LMG******  *C17 lmg*******
-*C18 LMG******  *C18 lmg*******
-*C19 LMG******  *C19 lmg*******
-*C20 LMG******  *C20 lmg*******
-*C21 LMG******  *C21 lmg*******
-*C22 LMG******  *C22 lmg*******
-*C23 LMG******  *C23 lmg*******
-*C24 LMG******  *C24 lmg*******
-*C25 LMG******  *C25 lmg*******
-*C26 LMG******  *C26 lmg*******
-*C27 LMG******  *C27 lmg*******    # Skip 28
-*C29 LMG******  *C29 lmg*******
-*C30 LMG******  *C30 lmg*******
-*C31 LMG******  *C31 lmg*******
-*C32 LMG******  *C32 lmg*******
-*C33 LMG******  *C33 lmg*******
-*C34 LMG******  *C34 lmg*******
-*C35 LMG******  *C35 lmg*******
-*C36 LMG******  *C36 lmg*******
-*C37 LMG******  *C37 lmg*******
-*C38 LMG******  *C38 lmg*******
-*C39 LMG******  *C39 lmg*******
-*C40 LMG******  *C40 lmg*******
-*C41 LMG******  *C41 lmg*******
-*C42 LMG******  *C42 lmg*******
-*C43 LMG******  *C43 lmg*******
-*C44 LMG******  *C44 lmg*******
-*C45 LMG******  *C45 lmg*******
+*C11 LMG******  *C11 lmg******     create LMG aliphatic tail lmg - added by Gehan (01/23/23)
+*C12 LMG******  *C12 lmg******
+*C13 LMG******  *C13 lmg******
+*C14 LMG******  *C14 lmg******
+*C15 LMG******  *C15 lmg******
+*C16 LMG******  *C16 lmg******
+*C17 LMG******  *C17 lmg******
+*C18 LMG******  *C18 lmg******
+*C19 LMG******  *C19 lmg******
+*C20 LMG******  *C20 lmg******
+*C21 LMG******  *C21 lmg******
+*C22 LMG******  *C22 lmg******
+*C23 LMG******  *C23 lmg******
+*C24 LMG******  *C24 lmg******
+*C25 LMG******  *C25 lmg******
+*C26 LMG******  *C26 lmg******
+*C27 LMG******  *C27 lmg******    # Skip 28
+*C29 LMG******  *C29 lmg******
+*C30 LMG******  *C30 lmg******
+*C31 LMG******  *C31 lmg******
+*C32 LMG******  *C32 lmg******
+*C33 LMG******  *C33 lmg******
+*C34 LMG******  *C34 lmg******
+*C35 LMG******  *C35 lmg******
+*C36 LMG******  *C36 lmg******
+*C37 LMG******  *C37 lmg******
+*C38 LMG******  *C38 lmg******
+*C39 LMG******  *C39 lmg******
+*C40 LMG******  *C40 lmg******
+*C41 LMG******  *C41 lmg******
+*C42 LMG******  *C42 lmg******
+*C43 LMG******  *C43 lmg******
+*C44 LMG******  *C44 lmg******
+*C45 LMG******  *C45 lmg******
 
-*C2  LMT******  *C2  lmt*******     create LMT tail - added by Gehan (01/23/23)
-*C3  LMT******  *C3  lmt*******
-*C4  LMT******  *C4  lmt*******
-*C5  LMT******  *C5  lmt*******
-*C6  LMT******  *C6  lmt*******
-*C7  LMT******  *C7  lmt*******
-*C8  LMT******  *C8  lmt*******
-*C9  LMT******  *C9  lmt*******
-*C10 LMT******  *C10 lmt*******
-*C11 LMT******  *C11 lmt*******
-*C12 LMT******  *C12 lmt*******
+*C2  LMT******  *C2  lmt******     create LMT aliphatic tail lmg - added by Gehan (01/23/23)
+*C3  LMT******  *C3  lmt******
+*C4  LMT******  *C4  lmt******
+*C5  LMT******  *C5  lmt******
+*C6  LMT******  *C6  lmt******
+*C7  LMT******  *C7  lmt******
+*C8  LMT******  *C8  lmt******
+*C9  LMT******  *C9  lmt******
+*C10 LMT******  *C10 lmt******
+*C11 LMT******  *C11 lmt******
+*C12 LMT******  *C12 lmt******
 
-*C9  LHG******  *C9  lhg*******     create LHG tail - added by Gehan (08/02/22)
-*C10 LHG******  *C10 lhg*******
-*C11 LHG******  *C11 lhg*******
-*C12 LHG******  *C12 lhg*******
-*C13 LHG******  *C13 lhg*******
-*C14 LHG******  *C14 lhg*******
-*C15 LHG******  *C15 lhg*******
-*C16 LHG******  *C16 lhg*******
-*C17 LHG******  *C17 lhg*******
-*C18 LHG******  *C18 lhg*******
-*C19 LHG******  *C19 lhg*******
-*C20 LHG******  *C20 lhg*******
-*C21 LHG******  *C21 lhg*******
-*C22 LHG******  *C22 lhg*******
-*C25 LHG******  *C25 lhg*******
-*C26 LHG******  *C26 lhg*******
-*C27 LHG******  *C27 lhg*******
-*C28 LHG******  *C28 lhg*******
-*C29 LHG******  *C29 lhg*******
-*C30 LHG******  *C30 lhg*******
-*C31 LHG******  *C31 lhg*******
-*C32 LHG******  *C32 lhg*******
-*C33 LHG******  *C33 lhg*******
-*C34 LHG******  *C34 lhg*******
-*C35 LHG******  *C35 lhg*******
-*C36 LHG******  *C36 lhg*******
-*C37 LHG******  *C37 lhg*******
-*C38 LHG******  *C38 lhg*******
+*C2  LMU******  *C2  lmu******     create LMU tail - added by Gehan (11/06/23)
+*C3  LMU******  *C3  lmu******
+*C4  LMU******  *C4  lmu******
+*C5  LMU******  *C5  lmu******
+*C6  LMU******  *C6  lmu******
+*C7  LMU******  *C7  lmu******
+*C8  LMU******  *C8  lmu******
+*C9  LMU******  *C9  lmu******
+*C10 LMU******  *C10 lmu******
+*C11 LMU******  *C11 lmu******
+*C12 LMU******  *C12 lmu******
 
-*C9  SQD******  *C9  sqd*******     create SQD tail - added by Gehan (09/19/22)
-*C10 SQD******  *C10 sqd*******
-*C11 SQD******  *C11 sqd*******
-*C12 SQD******  *C12 sqd*******
-*C13 SQD******  *C13 sqd*******
-*C14 SQD******  *C14 sqd*******
-*C15 SQD******  *C15 sqd*******
-*C16 SQD******  *C16 sqd*******
-*C17 SQD******  *C17 sqd*******
-*C18 SQD******  *C18 sqd*******
-*C19 SQD******  *C19 sqd*******
-*C20 SQD******  *C20 sqd*******
-*C21 SQD******  *C21 sqd*******
-*C22 SQD******  *C22 sqd*******
-*C25 SQD******  *C25 sqd*******
-*C26 SQD******  *C26 sqd*******
-*C27 SQD******  *C27 sqd*******
-*C28 SQD******  *C28 sqd*******
-*C29 SQD******  *C29 sqd*******
-*C30 SQD******  *C30 sqd*******
-*C31 SQD******  *C31 sqd*******
-*C32 SQD******  *C32 sqd*******
-*C33 SQD******  *C33 sqd*******
-*C34 SQD******  *C34 sqd*******
-*C35 SQD******  *C35 sqd*******
-*C36 SQD******  *C36 sqd*******
-*C37 SQD******  *C37 sqd*******
-*C38 SQD******  *C38 sqd*******
+*C9  LHG******  *C9  lhg******     create LHG aliphatic tail lhg - added by Gehan (08/02/22)
+*C10 LHG******  *C10 lhg******
+*C11 LHG******  *C11 lhg******
+*C12 LHG******  *C12 lhg******
+*C13 LHG******  *C13 lhg******
+*C14 LHG******  *C14 lhg******
+*C15 LHG******  *C15 lhg******
+*C16 LHG******  *C16 lhg******
+*C17 LHG******  *C17 lhg******
+*C18 LHG******  *C18 lhg******
+*C19 LHG******  *C19 lhg******
+*C20 LHG******  *C20 lhg******
+*C21 LHG******  *C21 lhg******
+*C22 LHG******  *C22 lhg******
+*C25 LHG******  *C25 lhg******
+*C26 LHG******  *C26 lhg******
+*C27 LHG******  *C27 lhg******
+*C28 LHG******  *C28 lhg******
+*C29 LHG******  *C29 lhg******
+*C30 LHG******  *C30 lhg******
+*C31 LHG******  *C31 lhg******
+*C32 LHG******  *C32 lhg******
+*C33 LHG******  *C33 lhg******
+*C34 LHG******  *C34 lhg******
+*C35 LHG******  *C35 lhg******
+*C36 LHG******  *C36 lhg******
+*C37 LHG******  *C37 lhg******
+*C38 LHG******  *C38 lhg******
+
+*C9  SQD******  *C9  sqd******     create SQD aliphatic tail sqd - added by Gehan (09/19/22)
+*C10 SQD******  *C10 sqd******
+*C11 SQD******  *C11 sqd******
+*C12 SQD******  *C12 sqd******
+*C13 SQD******  *C13 sqd******
+*C14 SQD******  *C14 sqd******
+*C15 SQD******  *C15 sqd******
+*C16 SQD******  *C16 sqd******
+*C17 SQD******  *C17 sqd******
+*C18 SQD******  *C18 sqd******
+*C19 SQD******  *C19 sqd******
+*C20 SQD******  *C20 sqd******
+*C21 SQD******  *C21 sqd******
+*C22 SQD******  *C22 sqd******
+*C25 SQD******  *C25 sqd******
+*C26 SQD******  *C26 sqd******
+*C27 SQD******  *C27 sqd******
+*C28 SQD******  *C28 sqd******
+*C29 SQD******  *C29 sqd******
+*C30 SQD******  *C30 sqd******
+*C31 SQD******  *C31 sqd******
+*C32 SQD******  *C32 sqd******
+*C33 SQD******  *C33 sqd******
+*C34 SQD******  *C34 sqd******
+*C35 SQD******  *C35 sqd******
+*C36 SQD******  *C36 sqd******
+*C37 SQD******  *C37 sqd******
+*C38 SQD******  *C38 sqd******
 
 *C **BCT******  *CT**BCT******      added by Gehan 
 CA    CA******   CA  CA ******      added by Gehan
@@ -466,7 +489,7 @@ SE  *MSE******   SD *MET******
 *NB  HOC******  *N1B HOC******
 *NC  HOC******  *N1C HOC******
 *ND  HOC******  *N1D HOC******
-*C1  HOC******  *C1  CT1******      create Chl a/b/d tail - added by Gehan
+*C1  HOC******  *C1  CT1******      create Chl a/b/d aliphatic tails - added by Gehan
 *C2  HOC******  *C2  CT1******
 *C3  HOC******  *C3  CT1******
 *C4  HOC******  *C4  CT1******
@@ -487,7 +510,7 @@ SE  *MSE******   SD *MET******
 *C19 HOC******  *C19 CT4******
 *C20 HOC******  *C20 CT4******
 
-*C1  AOB******  *C1  CT1******      create chlorophyll tail for A vs B  noMethyl - added by Gehan
+*C1  AOB******  *C1  CT1******      create chlorophyll aliphatic tail for A vs B  noMethyl - added by Gehan
 *C2  AOB******  *C2  CT1******
 *C3  AOB******  *C3  CT1******
 *C4  AOB******  *C4  CT1******
