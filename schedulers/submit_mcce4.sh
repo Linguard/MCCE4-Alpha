@@ -6,6 +6,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --mem=12G                 # Adjust memory if needed
+#SBATCH --export=ALL
 
 #=============================================================================
 #-----------------------------------------------------------------------------
@@ -13,7 +14,8 @@
 input_pdb="prot.pdb"    # (INPDB)
 
 # Set MCCE4 Parameters
-MCCE_HOME="/path/to/MCCE4"
+APPTAINER_BIN="/path/to/apptainer_bin"      
+MCCE_HOME="/path/to/MCCE4-Alpha"
 USER_PARAM="./user_param"
 EXTRA="./user_param/extra.tpl"
 TMP="/tmp"
@@ -36,7 +38,7 @@ stepC="f"               # Run a custom script between step3 and step4   : If tru
 # MCCE Simulation
 STEP1="step1.py -d 4 --dry"
 STEP2="step2.py -d 4 -l 1"
-STEP3="step3.py -d 4 -s delphi -p $CPUS -t \$TMP"
+STEP3="step3.py -d 4 -s ngpb -p $CPUS -t \$TMP"
 STEP4="step4.py --xts -i 7 -n 1"
 
 # Optional MCCE script locations
@@ -49,6 +51,19 @@ STEPC="/path/to/stepC_script.py"  # Optional StepC: Python script to run between
 # NO USER INPUT NECCESARY BELOW THIS LINE
 #------------------------------------------------------------------------------
 #==============================================================================
+
+# Initialize Apptainer to ensure job uses user-installed Apptainer and avoid systemd/cgroups (DBus) issues on compute nodes
+export PATH="$APPTAINER_BIN:$PATH"
+export APPTAINER_CONFIG_FILE="$HOME/.apptainer/apptainer.conf"
+mkdir -p "$HOME/.apptainer"
+
+cat > "$APPTAINER_CONFIG_FILE" <<'EOF'
+systemd cgroups = no
+EOF
+
+echo "Using apptainer: $(which apptainer)"
+echo "APPTAINER_CONFIG_FILE=$APPTAINER_CONFIG_FILE"
+ls -l "$APPTAINER_CONFIG_FILE"
 
 # Check MCCE_HOME exists before PATH export
 if [[ ! -d "$MCCE_HOME/bin" ]]; then
