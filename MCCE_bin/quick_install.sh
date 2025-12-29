@@ -192,6 +192,7 @@ if [[ "$APPTAINER_FOUND" -eq 1 ]]; then
       if [[ "$resolved_target" = "$sif_file" ]]; then
         echo "  $sif_mc4 is soft-linked to the generic image $sif_file. If you want to replace"
         echo "  the generic image, delete the file, then re-run this quick install script."
+        chmod +x "$sif_file"
       fi
     fi
   else
