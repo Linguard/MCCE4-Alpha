@@ -14,7 +14,7 @@
 input_pdb="prot.pdb"    # (INPDB)
 
 # Set MCCE4 Parameters
-APPTAINER_BIN="/path/to/apptainer_bin"      
+APPTAINER_BIN="/path/to/apptainer_bin"
 MCCE_HOME="/path/to/MCCE4-Alpha"
 USER_PARAM="./user_param"
 EXTRA="./user_param/extra.tpl"
@@ -22,8 +22,8 @@ TMP="/tmp"
 CPUS=1
 
 # Step control flags
-step1="t"               # STEP1: pre-run, pdb-> mcce pdb  (DO_PREMCCE)
-step2="t"               # STEP2: make rotamers            (DO_ROTAMERS)
+step1="f"               # STEP1: pre-run, pdb-> mcce pdb  (DO_PREMCCE)
+step2="f"               # STEP2: make rotamers            (DO_ROTAMERS)
 step3="t"               # STEP3: Energy calculations      (DO_ENERGY)
 step4="t"               # STEP4: Monte Carlo Sampling     (DO_MONTE)
 step_clean="t"          # Clean PBE data                  (BACKUP CLEAN) : Set to f if step3 --debug option is used
@@ -56,14 +56,9 @@ STEPC="/path/to/stepC_script.py"  # Optional StepC: Python script to run between
 export PATH="$APPTAINER_BIN:$PATH"
 export APPTAINER_CONFIG_FILE="$HOME/.apptainer/apptainer.conf"
 mkdir -p "$HOME/.apptainer"
-
 cat > "$APPTAINER_CONFIG_FILE" <<'EOF'
 systemd cgroups = no
 EOF
-
-echo "Using apptainer: $(which apptainer)"
-echo "APPTAINER_CONFIG_FILE=$APPTAINER_CONFIG_FILE"
-ls -l "$APPTAINER_CONFIG_FILE"
 
 # Check MCCE_HOME exists before PATH export
 if [[ ! -d "$MCCE_HOME/bin" ]]; then
@@ -72,17 +67,9 @@ if [[ ! -d "$MCCE_HOME/bin" ]]; then
     exit 1
 fi
 
-# Export environment for downstream script
-export input_pdb MCCE_HOME USER_PARAM EXTRA TMP
-export step1 step2 step3 step4 step_clean
-export center stepM stepA stepB stepC
-export STEP1 STEP2 STEP3 STEP4
-export STEPM STEPA STEPB STEPC
-
 # Define MCCE_HOME binary directory as mc_bin if MCCE_HOME is set
 if [[ -n "$MCCE_HOME" ]]; then
     mc_bin="$MCCE_HOME/bin"
-    echo "mc_bin defined as: $mc_bin"
 else
     echo "Error: MCCE_HOME is not set."
     exit 1
@@ -93,10 +80,27 @@ PATH=$(echo "$PATH" | tr ':' '\n' | grep -vx "$mc_bin" | paste -sd ':' -)
 export PATH="$mc_bin:$PATH"
 
 # Print useful info
+echo "============================================================"
+echo "MCCE4 SUBMIT SHELL JOB ENVIRONMENT (startup diagnostics)"
+echo "------------------------------------------------------------"
+echo "Date:             $(date)"
+echo "Host:             $(hostname)"
+echo "User:             $(whoami)"
+echo
+echo -e "Apptainer:        $(which apptainer)"
+echo -e "Config File:      $APPTAINER_CONFIG_FILE"
 echo -e "MCCE_HOME:        $MCCE_HOME"
-echo -e "MCCE_HOME_bin:    $mc_bin"
 echo -e "PATH:             $PATH"
 echo -e "Driver:           $mc_bin/driver_mcce4.sh"
+echo "============================================================"
+echo
+
+# Export environment for downstream script
+export input_pdb MCCE_HOME USER_PARAM EXTRA TMP
+export step1 step2 step3 step4 step_clean
+export center stepM stepA stepB stepC
+export STEP1 STEP2 STEP3 STEP4
+export STEPM STEPA STEPB STEPC
 
 # Inititiate MCCE_HOME PATH and call driver_mcce4.sh
 $mc_bin/driver_mcce4.sh
