@@ -22,14 +22,14 @@ TMP="/tmp"
 CPUS=1
 
 # Step control flags
-step1="f"               # STEP1: pre-run, pdb-> mcce pdb  (DO_PREMCCE)
-step2="f"               # STEP2: make rotamers            (DO_ROTAMERS)
+step1="t"               # STEP1: pre-run, pdb-> mcce pdb  (DO_PREMCCE)
+step2="t"               # STEP2: make rotamers            (DO_ROTAMERS)
 step3="t"               # STEP3: Energy calculations      (DO_ENERGY)
 step4="t"               # STEP4: Monte Carlo Sampling     (DO_MONTE)
 step_clean="t"          # Clean PBE data                  (BACKUP CLEAN) : Set to f if step3 --debug option is used
 
 # Optional step controls
-center="f"              # Center protein structure before MCCE run      : Set to f to skip centering and use input PDB as-is
+center="t"              # Center protein structure before MCCE run      : Set to f to skip centering and use input PDB as-is
 stepM="f"               # Generate Partial Membranes                    : If true, user MUST satisfy condidtions of stepM.sh, which can be be obtained on MCCE4/inhouse/stepM.sh
 stepA="f"               # Run a custom script between step1 and step2   : If true, user MUST satisfy condidtions of their custom script
 stepB="f"               # Run a custom script between step2 and step3   : If true, user MUST satisfy condidtions of their custom script
