@@ -1,0 +1,45 @@
+# 1. Basic Conformer Information: name, pka, em, rxn
+# 2. Structure Connectivity:
+# 3. Atom Parameters: Partial Charges and Radii
+#    - Partial Charges: Provided by formal charges of FE4S4
+# 4. Tested with Lv1 and NGPB w/ RCSB Ideal CIF: SF4.cif -> SF4.pdb (via PyMOL)
+# File Created by Gehan Ranepura on 01/01/2026
+
+# Conformer definition
+CONFLIST, SF4: SF4BK, SF401
+
+# ATOM name and bonds
+CONNECT, "FE1 ", SF401:  sp3, " S2 "," S3 "," S4 "
+CONNECT, "FE2 ", SF401:  sp3, " S1 "," S3 "," S4 "
+CONNECT, "FE3 ", SF401:  sp3, " S1 "," S2 "," S4 "
+CONNECT, "FE4 ", SF401:  sp3, " S1 "," S2 "," S3 "
+CONNECT, " S1 ", SF401:  sp3, "FE2 ","FE3 ","FE4 "
+CONNECT, " S2 ", SF401:  sp3, "FE1 ","FE3 ","FE4 "
+CONNECT, " S3 ", SF401:  sp3, "FE1 ","FE2 ","FE4 "
+CONNECT, " S4 ", SF401:  sp3, "FE1 ","FE2 ","FE3 "
+
+
+# ATOM charges
+CHARGE, SF401, "FE1 ":  2.000 
+CHARGE, SF401, "FE2 ":  2.000
+CHARGE, SF401, "FE3 ":  2.000
+CHARGE, SF401, "FE4 ":  2.000
+CHARGE, SF401, " S1 ": -2.000
+CHARGE, SF401, " S2 ": -2.000
+CHARGE, SF401, " S3 ": -2.000
+CHARGE, SF401, " S4 ": -2.000
+
+
+# Atom radius, dielectric boundary radius, VDW radius, and energy well depth
+RADIUS, SF401, "FE1 ":  1.850,  2.000,  0.173
+RADIUS, SF401, "FE2 ":  1.850,  2.000,  0.173
+RADIUS, SF401, "FE3 ":  1.850,  2.000,  0.173
+RADIUS, SF401, "FE4 ":  1.850,  2.000,  0.173
+RADIUS, SF401, " S1 ":  1.850,  2.000,  0.200
+RADIUS, SF401, " S2 ":  1.850,  2.000,  0.200
+RADIUS, SF401, " S3 ":  1.850,  2.000,  0.200
+RADIUS, SF401, " S4 ":  1.850,  2.000,  0.200
+
+
+# Conformer parameters that appear in head3.lst: ne, Em0, nH, pKa0, rxn
+CONFORMER, SF401:  Em0=0.0, pKa0=0.00, ne=0, nH=0, rxn02= -109.224, rxn04= -52.568, rxn08= -24.336
