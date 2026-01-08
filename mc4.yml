@@ -6,12 +6,14 @@ channels:
 dependencies:
   - python=3.10
   - pip
+  - mdanalysis
   - numpy
+  - parmed
   - pip:
     - scipy
-    - requests
     - matplotlib
     - pandas
+    - pygraphviz
     - networkx
     - requests
     - seaborn

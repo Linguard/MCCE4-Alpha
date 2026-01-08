@@ -51,6 +51,13 @@ If you want to re-create it, run this command before running the script:
     * 'MCCE4/bin' and 'MCCE4/MCCE4_bin'
     * the unprivilege version of Apptainer if installed by the script
 
+## Environment update (01-08-2026):
+If your 'mc4' environment predates 01-08-2026, run these commands to update it:
+  ```
+  CLONE=$(dirname $(dirname "$(readlink -f "$(which mcce)")")); echo "$CLONE"
+  conda env update -n mc4 -f "$CLONE/mc4.yml
+  ```
+
 __🚀 Run Your First Job:__ [Quick Start](https://gunnerlab.github.io/mcce4_tutorial/docs/guide/quick_start/)  
 
 __📖 MCCE4-Alpha Tutorial:__ [Full Documentation](https://gunnerlab.github.io/mcce4_tutorial/)
@@ -71,6 +78,14 @@ Please also check out the companion repository __MCCE4-Tools__.
   - __Apply changes: cd to your clone, then run `git pull`__
 -->
 _This section will reflect important changes and will provide you with information on how to apply them; For example, if new python packages are added to the environment file (mc4.yml), then the entry pertaining to that change will list the command(s) to update your environment._ 
+
+* 2026-01-08:
+  - Updated python dependencies in mc4.yml
+  - __Apply changes: run these commands:__
+  ```
+  CLONE=$(dirname $(dirname "$(readlink -f "$(which mcce)")")); echo "$CLONE"
+  conda env update -n mc4 -f "$CLONE/mc4.yml
+  ```
 
 * 2025-11-25:
   - step1.py: Added error trapping on atom.loadline call
